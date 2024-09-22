@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package user_interactions;
+
+message Follow {
+    string id = 1;
+    string user_id = 2; # references id from iam service
+    string followee_arn = 3; # multi tenant id # tenant:entity_type:entity_id
+    string created_at = 4;
+}
+
+message FollowRequest {
+    Follow follow = 1;
+}
+
+message FollowResponse {
+    Follow follow = 1;
+}
+
+message UnfollowRequest {
+    string user_id = 1;
+    string followee_arn = 2; # multi tenant id # tenant:entity_type:entity_id
+}
+
+message UnfollowResponse {
+    Follow follow = 1;
+}
+
+message HasFollowedRequest {
+    string user_id = 1;
+    string followee_arn = 2; # multi tenant id # tenant:entity_type:entity_id
+}
+
+message HasFollowedResponse {
+    bool has_followed = 1;
+}
+
+# list all follows by user or follows on specific entity, ensure pagination, uses oneof
+message FilterByUser {
+    string user_id = 1;
+    string tenant = 2;
+    string entity_type = 3; # optional
+}
+
+message FilterByEntity {
+    string entity_arn = 1; # multi tenant id # tenant:entity_type:entity_id
+}
+
+message ListFollowsRequest {
+    oneof request {
+        FilterByUser filter_by_user = 1;            
+        FilterByEntity filter_by_entity = 2;
+    }
+    string page_size = 3;
+    string page_token = 4;
+}
+
+message ListFollowsResponse {
+    repeated Follow follows = 1;
+    string next_page_token = 2;
+}
+
+service FollowService {
+    rpc Follow(FollowRequest) returns (FollowResponse) {}
+    rpc Unfollow(UnfollowRequest) returns (UnfollowResponse) {}
+    rpc HasFollowed(HasFollowedRequest) returns (HasFollowedResponse) {}
+    rpc ListFollows(ListFollowsRequest) returns (ListFollowsResponse) {}
+}

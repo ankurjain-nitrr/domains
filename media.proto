@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package media;
+
+message Image {
+}
+
+message Video {
+}

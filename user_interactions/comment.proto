@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package user_interactions;
+
+message Comment {
+    string id = 1;
+    string user_id = 2; # references id from iam service
+    string entity_arn = 3; # multi tenant id # tenant:entity_type:entity_id
+    string content = 4; # comments can be text only
+    string created_at = 5;
+
+}
+
+message CreateCommentRequest {
+    Comment comment = 1;
+}
+
+message CreateCommentResponse {
+    Comment comment = 1;
+}
+
+message GetCommentRequest {
+    string id = 1;
+}
+
+message GetCommentResponse {
+    Comment comment = 1;
+}
+
+message DeleteCommentRequest {
+    string id = 1;
+}
+
+message DeleteCommentResponse {
+    Comment comment = 1;
+}
+
+# list all comments by user or comments on specific entity, ensure pagination, uses oneof
+message FilterByUser {
+    string user_id = 1;
+    string tenant = 2;
+    string entity_type = 3;
+}
+
+message FilterByEntity {
+    string entity_arn = 1; # multi tenant id # tenant:entity_type:entity_id
+}
+
+message ListCommentsRequest {
+    oneof request {
+        FilterByUser filter_by_user = 1;
+        FilterByEntity filter_by_entity = 2;
+    }
+    string page_size = 3;
+    string page_token = 4;
+}
+
+message ListCommentsResponse {
+    repeated Comment comments = 1;
+    string next_page_token = 2;
+}
+
+service CommentService {
+    rpc CreateComment(CreateCommentRequest) returns (CreateCommentResponse) {}
+    rpc GetComment(GetCommentRequest) returns (GetCommentResponse) {}
+    rpc DeleteComment(DeleteCommentRequest) returns (DeleteCommentResponse) {}
+    rpc ListComments(ListCommentsRequest) returns (ListCommentsResponse) {}
+}
+

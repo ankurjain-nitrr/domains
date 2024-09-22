@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package feed;
+
+message GetFeedRequest {
+    string user_id = 1;
+    string tenant = 2;
+    string entity_type = 3;
+    string page_size = 4;
+    string page_token = 5;
+}
+
+message GetFeedResponse {
+    repeated string entity_arns = 1;
+    string next_page_token = 2;
+}
+
+service FeedService {
+    rpc GetFeed(GetFeedRequest) returns (GetFeedResponse) {}
+}
