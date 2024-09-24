@@ -7,6 +7,10 @@ message Permission {
     string id = 1;
     string name = 2;
     string description = 3;
+     # tenet:user_id:entity_type:entity_id
+     # ex: social_network:user_id_123:Content:content_id_123 # specific content
+     # ex: social_network:user_id_123:Comment:* # all comments created by user_id_123
+     # ex: social_network:*:Comment:* # all comments on the platform
     string resource = 4;
     # one of all actions (boolean) or specific actions (list of strings)
     oneof actions {
