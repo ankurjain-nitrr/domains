@@ -4,17 +4,18 @@ package iam;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "iam/actions.proto";
 
 # checks if the user has the permission to perform the action on the resource or has a specific permission
 message AuthorizeRequest {
     message ResourceAction {
-        string resource = 1;
-        repeated string actions = 2;
+        string resource = 1; # resource arn
+        repeated Action actions = 2;
     }
-    string token = 1;
+    string token = 1; # user token
     oneof permission {
         ResourceAction resource_action = 2;
-        string permission = 3;
+        string permission = 3; # id of the permission
     }
 }
 

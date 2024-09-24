@@ -2,12 +2,14 @@ syntax = "proto3";
 
 package iam;
 
+import "iam/actions.proto";
+
 # permissions that allows roles to perform actions on a specific resource
 message Permission {
     string id = 1;
     string name = 2;
     string description = 3;
-     # tenet:user_id:entity_type:entity_id
+     # tenent:user_id:entity_type:entity_id
      # ex: social_network:user_id_123:Content:content_id_123 # specific content
      # ex: social_network:user_id_123:Comment:* # all comments created by user_id_123
      # ex: social_network:*:Comment:* # all comments on the platform
@@ -19,11 +21,11 @@ message Permission {
     }
     string tenant = 7;
     bool is_active = 8;
-    string created_at = 8;
-    string updated_at = 9;
+    string created_at = 9;
+    string updated_at = 10;
 
     message Actions {
-        repeated string actions = 1;
+        repeated Action actions = 1;
     }
 }
 
