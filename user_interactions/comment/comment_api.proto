@@ -2,14 +2,7 @@ syntax = "proto3";
 
 package user_interactions;
 
-message Comment {
-    string id = 1;
-    string user_id = 2; # references id from iam service
-    string entity_arn = 3; # multi tenant id # tenant:entity_type:entity_id
-    string content = 4; # comments can be text only
-    string created_at = 5;
 
-}
 
 message CreateCommentRequest {
     Comment comment = 1;

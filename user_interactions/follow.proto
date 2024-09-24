@@ -6,7 +6,7 @@ message Follow {
     string id = 1;
     string user_id = 2; # references id from iam service
     string followee_arn = 3; # multi tenant id # tenant:entity_type:entity_id
-    string created_at = 4;
+    int64 created_at = 4;
 }
 
 message FollowRequest {
