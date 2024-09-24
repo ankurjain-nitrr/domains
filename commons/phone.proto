@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package commons;
+
+# country code list: https://en.wikipedia.org/wiki/List_of_country_calling_codes
+
+# phone number with country code
+message Phone {
+    string country_code = 1;
+    string number = 2;
+}

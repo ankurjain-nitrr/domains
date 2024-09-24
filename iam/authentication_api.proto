@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package iam;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+
+message LoginWithPasswordRequest {
+    oneof identifier {
+        string email = 1;
+        string phone = 2;
+    }
+    string password = 3;
+}
+
+message LoginWithPasswordResponse {
+    string token = 1;
+}
+
+message GenerateOTPRequest {
+    oneof identifier {
+        string email = 1;
+        string phone = 2;
+    }
+}
+
+message GenerateOTPResponse {
+}
+
+# verify OTP
+message VerifyOTPRequest {
+    oneof identifier {
+        string email = 1;
+        string phone = 2;
+    }
+    string otp = 3;
+}
+
+message VerifyOTPResponse {
+    string token = 1;
+    string refresh_token = 2;
+    string token_expires_at = 3;
+    string refresh_token_expires_at = 4;
+}
+
+service AuthenticationService {
+    rpc GenerateOTP(GenerateOTPRequest) returns (GenerateOTPResponse) {}
+    rpc VerifyOTP(VerifyOTPRequest) returns (VerifyOTPResponse) {}
+    rpc LoginWithPassword(LoginWithPasswordRequest) returns (LoginWithPasswordResponse) {}
+}
+
+
+
+

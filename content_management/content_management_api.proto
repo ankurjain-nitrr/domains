@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package contentmanagement;
+
+import "content_management/content_management.proto";
+import "commons/time.proto";
+
+message CreateContentRequest {
+    Content content = 1;
+}
+
+message CreateContentResponse {
+    Content content = 1;
+}
+
+message GetContentRequest {
+    string id = 1;
+}
+
+message GetContentResponse {
+    Content content = 1;
+}
+
+message UpdateContentRequest {
+    Content content = 1;
+}
+
+message UpdateContentResponse {
+    Content content = 1;
+}
+
+message DeleteContentRequest {
+    string id = 1;
+}
+
+message DeleteContentResponse {
+    Content content = 1;
+}
+
+message ListContentRequest {
+    string created_by = 1; // references user id from user management service
+    oneof time_range {
+        commons.TimeRange created_at_time_range = 2;
+        commons.TimeRange updated_at_time_range = 3;
+    }
+    int64 page_size = 4;
+    string page_token = 5;
+}
+
+message ListContentResponse {
+    repeated Content contents = 1;
+    string next_page_token = 2;
+}
+
+service ContentManagementService {
+    rpc CreateContent(CreateContentRequest) returns (CreateContentResponse) {}
+    rpc GetContent(GetContentRequest) returns (GetContentResponse) {}
+    rpc UpdateContent(UpdateContentRequest) returns (UpdateContentResponse) {}
+    rpc DeleteContent(DeleteContentRequest) returns (DeleteContentResponse) {}
+    rpc ListContent(ListContentRequest) returns (ListContentResponse) {}
+}
+
+
+
+
+

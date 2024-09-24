@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package contentmanagement;
+package content_management;
 
-import media/media.proto
+import "media/media.proto";
 
 message Content {
     string id = 1;
@@ -15,69 +15,4 @@ message Content {
     string updated_by = 8; // references user id from user management service // can be updated by moderators
     string updated_at = 9;
 }
-
-message CreateContentRequest {
-    Content content = 1;
-}
-
-message CreateContentResponse {
-    Content content = 1;
-}
-
-message GetContentRequest {
-    string id = 1;
-}
-
-message GetContentResponse {
-    Content content = 1;
-}
-
-message UpdateContentRequest {
-    Content content = 1;
-}
-
-message UpdateContentResponse {
-    Content content = 1;
-}
-
-message DeleteContentRequest {
-    string id = 1;
-}
-
-message DeleteContentResponse {
-    Content content = 1;
-}
-
-# list content by created_by with either created time range or updated time range along with pagination
-message TimeRange {
-    string start_time = 1;
-    string end_time = 2;
-}
-
-message ListContentRequest {
-    string created_by = 1; // references user id from user management service
-    oneof time_range {
-        TimeRange created_time_range = 2;
-        TimeRange updated_time_range = 3;
-    }
-    int64 page_size = 4;
-    string page_token = 5;
-}
-
-message ListContentResponse {
-    repeated Content contents = 1;
-    string next_page_token = 2;
-}
-
-service ContentManagementService {
-    rpc CreateContent(CreateContentRequest) returns (CreateContentResponse) {}
-    rpc GetContent(GetContentRequest) returns (GetContentResponse) {}
-    rpc UpdateContent(UpdateContentRequest) returns (UpdateContentResponse) {}
-    rpc DeleteContent(DeleteContentRequest) returns (DeleteContentResponse) {}
-    rpc ListContent(ListContentRequest) returns (ListContentResponse) {}
-}
-
-
-
-
 

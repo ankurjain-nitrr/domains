@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package commons;
+
+message TimeRange {
+    string start_time = 1;
+    string end_time = 2;
+}
+

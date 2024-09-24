@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package iam;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+message AuthorizeRequest {
+    string token = 1;
+    string permission = 2;
+}
+
+message AuthorizeResponse {
+    bool authorized = 1;
+}
+
+service AuthorizationService {
+    rpc Authorize(AuthorizeRequest) returns (AuthorizeResponse) {}
+}

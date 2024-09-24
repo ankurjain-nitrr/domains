@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package iam;
+
+# permissions that allows roles to perform actions on a specific resource
+message Permission {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string resource = 4;
+    # one of all actions (boolean) or specific actions (list of strings)
+    oneof actions {
+        bool all_actions = 5;
+        Actions actions = 6;
+    }
+    string tenant = 7;
+    bool is_active = 8;
+    string created_at = 8;
+    string updated_at = 9;
+
+    message Actions {
+        repeated string actions = 1;
+    }
+}
+
+# roles that can be assigned to users
+message Role {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string created_at = 4;
+    string updated_at = 5;
+    repeated string permissions = 6; # references permission id from permission service
+    string tenant = 7;
+    bool is_active = 8;
+}
+
+message CreatePermissionRequest {
+    Permission permission = 1;
+}
+
+message CreatePermissionResponse {
+    Permission permission = 1;
+}
+
+message GetPermissionRequest {
+    string id = 1;
+}
+
+message GetPermissionResponse {
+    Permission permission = 1;
+}
+
+message UpdatePermissionRequest {
+    Permission permission = 1;
+}
+
+message UpdatePermissionResponse {
+    Permission permission = 1;
+}
+
+message DeletePermissionRequest {
+    string id = 1;
+}
+
+message DeletePermissionResponse {
+    Permission permission = 1;
+}
+
+message CreateRoleRequest {
+    Role role = 1;
+}
+
+message CreateRoleResponse {
+    Role role = 1;
+}
+
+message GetRoleRequest {
+    string id = 1;
+}
+
+message GetRoleResponse {
+    Role role = 1;
+}
+
+message UpdateRoleRequest {
+    Role role = 1;
+}
+
+message UpdateRoleResponse {
+    Role role = 1;
+}
+
+message DeleteRoleRequest {
+    string id = 1;
+}
+
+message DeleteRoleResponse {
+    Role role = 1;
+}
+
+service RolePermissionService {
+    rpc CreatePermission(CreatePermissionRequest) returns (CreatePermissionResponse) {}
+    rpc GetPermission(GetPermissionRequest) returns (GetPermissionResponse) {}
+    rpc UpdatePermission(UpdatePermissionRequest) returns (UpdatePermissionResponse) {}
+    rpc DeletePermission(DeletePermissionRequest) returns (DeletePermissionResponse) {} # marks the permission as inactive
+    rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse) {}
+    rpc GetRole(GetRoleRequest) returns (GetRoleResponse) {}
+    rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse) {}
+    rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse) {} # marks the role as inactive
+}

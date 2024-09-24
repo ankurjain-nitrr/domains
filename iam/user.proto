@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package iam;
+
+import "commons/phone.proto";
+
+message User {
+    string id = 1;
+    string name = 2;
+    string email = 3;
+    string password = 4; # hashed password, can be used for authentication
+    Phone phone = 5;
+    string created_at = 6;
+    string updated_at = 7;
+    bool is_active = 8;
+    string tenant = 9; # tenant id which was used to create the user
+    repeated string roles = 10; # role ids for the user
+}
+
+message CreateUserRequest {
+    User user = 1;
+}
+
+message CreateUserResponse {
+    User user = 1;
+}
+
+message GetUserRequest {
+    string id = 1;
+}
+
+message GetUserResponse {
+    User user = 1;
+}
+
+message UpdateUserRequest {
+    User user = 1;
+}
+
+message UpdateUserResponse {
+    User user = 1;
+}
+
+message DeleteUserRequest {
+    string id = 1;
+}
+
+message DeleteUserResponse {
+    User user = 1;
+}
+
+message AssignRoleRequest {
+    string user_id = 1;
+    string role_id = 2;
+}
+
+message AssignRoleResponse {
+    User user = 1;
+}
+
+message RemoveRoleRequest {
+    string user_id = 1;
+    string role_id = 2;
+}
+
+message RemoveRoleResponse {
+    User user = 1;
+}
+
+
+service UserService {
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+    rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
+    rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {} # marks the user as inactive
+    rpc AssignRole(AssignRoleRequest) returns (AssignRoleResponse) {}
+    rpc RemoveRole(RemoveRoleRequest) returns (RemoveRoleResponse) {}
+}
