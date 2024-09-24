@@ -1,23 +1,23 @@
 syntax = "proto3";
 
-package iam;
+package iam.v1;
 
-import "iam/actions.proto";
+import "iam/v1/actions.proto";
 
-# permissions that allows roles to perform actions on a specific resource
+// permissions that allows roles to perform actions on a specific resource
 message Permission {
     string id = 1;
     string name = 2;
     string description = 3;
-     # tenent:user_id:entity_type:entity_id
-     # ex: social_network:user_id_123:Content:content_id_123 # specific content
-     # ex: social_network:user_id_123:Comment:* # all comments created by user_id_123
-     # ex: social_network:*:Comment:* # all comments on the platform
+     // tenent:user_id:entity_type:entity_id
+     // ex: social_network:user_id_123:Content:content_id_123 # specific content
+     // ex: social_network:user_id_123:Comment:* # all comments created by user_id_123
+     // ex: social_network:*:Comment:* # all comments on the platform
     string resource = 4;
-    # one of all actions (boolean) or specific actions (list of strings)
+    // one of all actions (boolean) or specific actions (list of strings)
     oneof actions {
         bool all_actions = 5;
-        Actions actions = 6;
+        Actions actions_list = 6;
     }
     string tenant = 7;
     bool is_active = 8;
@@ -25,18 +25,18 @@ message Permission {
     string updated_at = 10;
 
     message Actions {
-        repeated Action actions = 1;
+        repeated iam.v1.Action actions = 1;
     }
 }
 
-# roles that can be assigned to users
+// roles that can be assigned to users
 message Role {
     string id = 1;
     string name = 2;
     string description = 3;
     string created_at = 4;
     string updated_at = 5;
-    repeated string permissions = 6; # references permission id from permission service
+    repeated string permissions = 6; // references permission id from permission service
     string tenant = 7;
     bool is_active = 8;
 }
@@ -109,9 +109,9 @@ service RolePermissionService {
     rpc CreatePermission(CreatePermissionRequest) returns (CreatePermissionResponse) {}
     rpc GetPermission(GetPermissionRequest) returns (GetPermissionResponse) {}
     rpc UpdatePermission(UpdatePermissionRequest) returns (UpdatePermissionResponse) {}
-    rpc DeletePermission(DeletePermissionRequest) returns (DeletePermissionResponse) {} # marks the permission as inactive
+    rpc DeletePermission(DeletePermissionRequest) returns (DeletePermissionResponse) {} // marks the permission as inactive
     rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse) {}
     rpc GetRole(GetRoleRequest) returns (GetRoleResponse) {}
     rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse) {}
-    rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse) {} # marks the role as inactive
+    rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse) {} // marks the role as inactive
 }

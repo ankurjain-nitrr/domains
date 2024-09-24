@@ -1,11 +1,12 @@
 syntax = "proto3";
 
-package user_interactions;
+package user_interactions.v1;
 
-# multi tenant like capabilites # arn format references # movies can be liked by users
+// multi tenant like capabilites 
+// arn format references # movies can be liked by users
 message Like {
-    string user_id = 1; # references id from iam service
-    string entity_arn = 2; # tenent:entity_type:entity_id
+    string user_id = 1; // references id from iam service
+    string entity_arn = 2; // tenent:entity_type:entity_id
     int64 created_at = 3;
 }
 
@@ -19,7 +20,7 @@ message LikeResponse {
 
 message HasLikedRequest {
     string user_id = 1;
-    string entity_arn = 2; # tenent:entity_type:entity_id
+    string entity_arn = 2; // tenent:entity_type:entity_id
 }
 
 message HasLikedResponse {
@@ -28,23 +29,14 @@ message HasLikedResponse {
 
 message UndoLikeRequest {
     string user_id = 1;
-    string entity_arn = 2; # tenent:entity_type:entity_id
+    string entity_arn = 2; // tenent:entity_type:entity_id
 }
 
 message UndoLikeResponse {
     Like like = 1;
 }
 
-# list all likes by user or likes on specific entity, ensure pagination, uses oneof
-message FilterByUser {
-    string user_id = 1;
-    string tenant = 2;
-    string entity_type = 3; # optional
-}
 
-message FilterByEntity {
-    string entity_arn = 1; # tenent:entity_type:entity_id
-}
 
 message ListLikesRequest {
     oneof request {
@@ -53,6 +45,17 @@ message ListLikesRequest {
     }
     string page_size = 3;
     string page_token = 4;
+
+    // list all likes by user or likes on specific entity, ensure pagination, uses oneof
+    message FilterByUser {
+        string user_id = 1;
+        string tenant = 2;
+        string entity_type = 3; // optional
+    }
+
+    message FilterByEntity {
+        string entity_arn = 1; // tenent:entity_type:entity_id
+    }
 }
 
 message ListLikesResponse {

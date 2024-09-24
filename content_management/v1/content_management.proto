@@ -1,15 +1,16 @@
 syntax = "proto3";
 
-package content_management;
+package content_management.v1;
 
-import "media/media.proto";
+import "media/v1/media.proto";
 
+// Content represents a piece of content with title, text, images, videos, and metadata
 message Content {
     string id = 1;
     string title = 2;
     string text = 3;
-    repeated media.Image images = 4;
-    repeated media.Video videos = 5;
+    repeated media.v1.Image images = 4;
+    repeated media.v1.Video videos = 5;
     string created_by = 6; // references user id from user management service
     int64 created_at = 7;
     string updated_by = 8; // references user id from user management service // can be updated by moderators

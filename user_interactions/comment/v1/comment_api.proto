@@ -1,15 +1,15 @@
 syntax = "proto3";
 
-package user_interactions;
+package user_interactions.comment.v1;
 
-
+import "user_interactions/comment/v1/comment.proto";
 
 message CreateCommentRequest {
-    Comment comment = 1;
+    user_interactions.comment.v1.Comment comment = 1;
 }
 
 message CreateCommentResponse {
-    Comment comment = 1;
+    user_interactions.comment.v1.Comment comment = 1;
 }
 
 message GetCommentRequest {
@@ -17,7 +17,7 @@ message GetCommentRequest {
 }
 
 message GetCommentResponse {
-    Comment comment = 1;
+    user_interactions.comment.v1.Comment comment = 1;
 }
 
 message DeleteCommentRequest {
@@ -25,19 +25,10 @@ message DeleteCommentRequest {
 }
 
 message DeleteCommentResponse {
-    Comment comment = 1;
+    user_interactions.comment.v1.Comment comment = 1;
 }
 
-# list all comments by user or comments on specific entity, ensure pagination, uses oneof
-message FilterByUser {
-    string user_id = 1;
-    string tenant = 2;
-    string entity_type = 3;
-}
 
-message FilterByEntity {
-    string entity_arn = 1; # multi tenant id # tenant:entity_type:entity_id
-}
 
 message ListCommentsRequest {
     oneof request {
@@ -46,10 +37,22 @@ message ListCommentsRequest {
     }
     string page_size = 3;
     string page_token = 4;
+
+    // FilterByUser filters comments by user
+    message FilterByUser {
+        string user_id = 1;
+        string tenant = 2;
+        string entity_type = 3;
+    }
+
+    // FilterByEntity filters comments by entity
+    message FilterByEntity {
+        string entity_arn = 1; // multi tenant id # tenant:entity_type:entity_id
+    }
 }
 
 message ListCommentsResponse {
-    repeated Comment comments = 1;
+    repeated user_interactions.comment.v1.Comment comments = 1;
     string next_page_token = 2;
 }
 

@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package user_interactions;
+package user_interactions.v1;
 
 message Dislike {
     string id = 1;
     string user_id = 2;
-    string entity_arn = 3; # tenent:entity_type:entity_id
+    string entity_arn = 3; // tenent:entity_type:entity_id
     int64 created_at = 4;
 }
 
@@ -19,7 +19,7 @@ message DislikeResponse {
 
 message HasDislikedRequest {
     string user_id = 1;
-    string entity_arn = 2; # tenent:entity_type:entity_id
+    string entity_arn = 2; // tenent:entity_type:entity_id
 }
 
 message HasDislikedResponse {
@@ -28,22 +28,11 @@ message HasDislikedResponse {
 
 message UndoDislikeRequest {
     string user_id = 1;
-    string entity_arn = 2; # tenent:entity_type:entity_id
+    string entity_arn = 2; // tenent:entity_type:entity_id
 }
 
 message UndoDislikeResponse {
     Dislike dislike = 1;
-}
-
-// Reuse FilterByUser and FilterByEntity from like.proto
-message FilterByUser {
-    string user_id = 1;
-    string tenant = 2;
-    string entity_type = 3; # optional
-}
-
-message FilterByEntity {
-    string entity_arn = 1; # tenent:entity_type:entity_id
 }
 
 message ListDislikesRequest {
@@ -53,6 +42,16 @@ message ListDislikesRequest {
     }
     string page_size = 3;
     string page_token = 4;
+
+    message FilterByUser {
+        string user_id = 1;
+        string tenant = 2;
+        string entity_type = 3; // optional
+    }
+
+    message FilterByEntity {
+        string entity_arn = 1; // tenent:entity_type:entity_id
+    }
 }
 
 message ListDislikesResponse {

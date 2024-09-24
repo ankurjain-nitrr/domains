@@ -1,10 +1,6 @@
 syntax = "proto3";
 
-package iam;
-
-import "google/api/annotations.proto";
-import "google/protobuf/empty.proto";
-
+package iam.v1;
 
 message LoginWithPasswordRequest {
     oneof identifier {
@@ -28,7 +24,7 @@ message GenerateOTPRequest {
 message GenerateOTPResponse {
 }
 
-# verify OTP
+// verify OTP
 message VerifyOTPRequest {
     oneof identifier {
         string email = 1;

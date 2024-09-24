@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package iam.v1;
+
+import "iam/v1/actions.proto";
+
+// checks if the user has the permission to perform the action on the resource or has a specific permission
+message AuthorizeRequest {
+    message ResourceAction {
+        string resource = 1; // resource arn
+        repeated Action actions = 2;
+    }
+    string token = 1; //user token
+    oneof permission {
+        ResourceAction resource_action = 2;
+        string permission_id = 3; // id of the permission
+    }
+}
+
+message AuthorizeResponse {
+    bool authorized = 1;
+}
+
+service AuthorizationService {
+    rpc Authorize(AuthorizeRequest) returns (AuthorizeResponse) {}
+}

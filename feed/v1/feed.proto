@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package feed;
+package feed.v1;
 
 message GetFeedRequest {
     string user_id = 1;

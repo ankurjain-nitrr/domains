@@ -1,0 +1,19 @@
+version: v1
+managed:
+  enabled: true
+  java_multiple_files: true
+  java_package_prefix:
+    default: "com.domains"
+  go_package_prefix:
+    default: "github.com/ankurjainnitrr/domains/gen/proto/go"
+plugins:
+  - name: go
+    out: gen/proto/go
+    opt: paths=source_relative
+  - name: go-grpc
+    out: gen/proto/go
+    opt: paths=source_relative
+  - name: java
+    out: gen/proto/java
+  - name: grpc-java
+    out: gen/proto/java

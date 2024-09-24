@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package iam;
+package iam.v1;
 
 enum Action {
     ACTION_UNSPECIFIED = 0;

@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package user_interactions;
+package user_interactions.v1;
 
 message Follow {
     string id = 1;
-    string user_id = 2; # references id from iam service
-    string entity_arn = 3; # multi tenant id # tenant:entity_type:entity_id
+    string user_id = 2; // references id from iam service
+    string entity_arn = 3; // multi tenant id # tenant:entity_type:entity_id
     int64 created_at = 4;
 }
 
@@ -19,7 +19,7 @@ message FollowResponse {
 
 message UnfollowRequest {
     string user_id = 1;
-    string entity_arn = 2; # multi tenant id # tenant:entity_type:entity_id
+    string entity_arn = 2; // multi tenant id # tenant:entity_type:entity_id
 }
 
 message UnfollowResponse {
@@ -28,22 +28,22 @@ message UnfollowResponse {
 
 message HasFollowedRequest {
     string user_id = 1;
-    string entity_arn = 2; # multi tenant id # tenant:entity_type:entity_id
+    string entity_arn = 2; // multi tenant id # tenant:entity_type:entity_id
 }
 
 message HasFollowedResponse {
     bool has_followed = 1;
 }
 
-# list all follows by user or follows on specific entity, ensure pagination, uses oneof
+// list all follows by user or follows on specific entity, ensure pagination, uses oneof
 message FilterByUser {
     string user_id = 1;
     string tenant = 2;
-    string entity_type = 3; # optional
+    string entity_type = 3; // optional
 }
 
 message FilterByEntity {
-    string entity_arn = 1; # multi tenant id # tenant:entity_type:entity_id
+    string entity_arn = 1; // multi tenant id # tenant:entity_type:entity_id
 }
 
 message ListFollowsRequest {

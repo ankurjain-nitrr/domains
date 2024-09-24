@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package commons.v1;
+
+// TimeRange represents a range of time with start and end epoch time
+message TimeRange {
+    int64 start_time = 1;
+    int64 end_time = 2;
+}
+

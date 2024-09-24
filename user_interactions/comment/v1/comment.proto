@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package user_interactions.comment.v1;
+
+// Comment represents a comment on an entity
+message Comment {
+    string id = 1;
+    string user_id = 2; // references id from iam service
+    string entity_arn = 3; // multi tenant id # tenant:entity_type:entity_id
+    string content = 4; // comments can be text only
+    int64 created_at = 5;
+    int64 updated_at = 6;
+}
