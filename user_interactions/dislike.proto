@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package user_interactions;
+
+message Dislike {
+    string id = 1;
+    string user_id = 2;
+    string entity_arn = 3; # tenent:entity_type:entity_id
+    int64 created_at = 4;
+}
+
+message DislikeRequest {
+    Dislike dislike = 1;
+}
+
+message DislikeResponse {
+    Dislike dislike = 1;
+}
+
+message HasDislikedRequest {
+    string user_id = 1;
+    string entity_arn = 2; # tenent:entity_type:entity_id
+}
+
+message HasDislikedResponse {
+    Dislike dislike = 1;
+}
+
+message UndoDislikeRequest {
+    string user_id = 1;
+    string entity_arn = 2; # tenent:entity_type:entity_id
+}
+
+message UndoDislikeResponse {
+    Dislike dislike = 1;
+}
+
+// Reuse FilterByUser and FilterByEntity from like.proto
+message FilterByUser {
+    string user_id = 1;
+    string tenant = 2;
+    string entity_type = 3; # optional
+}
+
+message FilterByEntity {
+    string entity_arn = 1; # tenent:entity_type:entity_id
+}
+
+message ListDislikesRequest {
+    oneof request {
+        FilterByUser filter_by_user = 1;
+        FilterByEntity filter_by_entity = 2;
+    }
+    string page_size = 3;
+    string page_token = 4;
+}
+
+message ListDislikesResponse {
+    repeated Dislike dislikes = 1;
+    string next_page_token = 2;
+}
+
+service DislikeService {
+    rpc Dislike(DislikeRequest) returns (DislikeResponse) {}
+    rpc HasDisliked(HasDislikedRequest) returns (HasDislikedResponse) {}
+    rpc UndoDislike(UndoDislikeRequest) returns (UndoDislikeResponse) {}
+    rpc ListDislikes(ListDislikesRequest) returns (ListDislikesResponse) {}
+}

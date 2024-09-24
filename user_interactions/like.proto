@@ -9,27 +9,12 @@ message Like {
     int64 created_at = 3;
 }
 
-message Dislike {
-    string id = 1;
-    string user_id = 2;
-    string entity_arn = 3; # tenent:entity_type:entity_id
-    int64 created_at = 4;
-}
-
 message LikeRequest {
     Like like = 1;
 }
 
 message LikeResponse {
     Like like = 1;
-}
-
-message DislikeRequest {
-    Dislike dislike = 1;
-}
-
-message DislikeResponse {
-    Dislike dislike = 1;
 }
 
 message HasLikedRequest {
@@ -41,15 +26,6 @@ message HasLikedResponse {
     Like like = 1;
 }
 
-message HasDislikedRequest {
-    string user_id = 1;
-    string entity_arn = 2; # tenent:entity_type:entity_id
-}
-
-message HasDislikedResponse {
-    Dislike dislike = 1;
-}
-
 message UndoLikeRequest {
     string user_id = 1;
     string entity_arn = 2; # tenent:entity_type:entity_id
@@ -57,15 +33,6 @@ message UndoLikeRequest {
 
 message UndoLikeResponse {
     Like like = 1;
-}
-
-message UndoDislikeRequest {
-    string user_id = 1;
-    string entity_arn = 2; # tenent:entity_type:entity_id
-}
-
-message UndoDislikeResponse {
-    Dislike dislike = 1;
 }
 
 # list all likes by user or likes on specific entity, ensure pagination, uses oneof
@@ -93,27 +60,9 @@ message ListLikesResponse {
     string next_page_token = 2;
 }
 
-message ListDislikesRequest {
-    oneof request {
-        FilterByUser filter_by_user = 1;
-        FilterByEntity filter_by_entity = 2;
-    }
-    string page_size = 3;
-    string page_token = 4;
-}
-
-message ListDislikesResponse {
-    repeated Dislike dislikes = 1;
-    string next_page_token = 2;
-}
-
 service LikeService {
     rpc Like(LikeRequest) returns (LikeResponse) {}
-    rpc Dislike(DislikeRequest) returns (DislikeResponse) {}
     rpc HasLiked(HasLikedRequest) returns (HasLikedResponse) {}
-    rpc HasDisliked(HasDislikedRequest) returns (HasDislikedResponse) {}
     rpc UndoLike(UndoLikeRequest) returns (UndoLikeResponse) {}
-    rpc UndoDislike(UndoDislikeRequest) returns (UndoDislikeResponse) {}
     rpc ListLikes(ListLikesRequest) returns (ListLikesResponse) {}
-    rpc ListDislikes(ListDislikesRequest) returns (ListDislikesResponse) {}
 }
