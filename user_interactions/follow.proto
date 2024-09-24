@@ -5,7 +5,7 @@ package user_interactions;
 message Follow {
     string id = 1;
     string user_id = 2; # references id from iam service
-    string followee_arn = 3; # multi tenant id # tenant:entity_type:entity_id
+    string entity_arn = 3; # multi tenant id # tenant:entity_type:entity_id
     int64 created_at = 4;
 }
 
@@ -19,7 +19,7 @@ message FollowResponse {
 
 message UnfollowRequest {
     string user_id = 1;
-    string followee_arn = 2; # multi tenant id # tenant:entity_type:entity_id
+    string entity_arn = 2; # multi tenant id # tenant:entity_type:entity_id
 }
 
 message UnfollowResponse {
@@ -28,7 +28,7 @@ message UnfollowResponse {
 
 message HasFollowedRequest {
     string user_id = 1;
-    string followee_arn = 2; # multi tenant id # tenant:entity_type:entity_id
+    string entity_arn = 2; # multi tenant id # tenant:entity_type:entity_id
 }
 
 message HasFollowedResponse {
