@@ -14,8 +14,8 @@ message CreateBankAccountResponse {
 
 message GetBankAccountRequest {
     oneof identifier {
-        string bank_account_id = 1;
-        string account_number = 2;
+        string account_number = 1;
+        BankAccountOwner owner = 2;
     }
 }
 
