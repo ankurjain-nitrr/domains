@@ -20,9 +20,5 @@ message Brand {
     string owner_id = 7; // must be registered as user in iam service or business entity in entity service service
     BrandOwnerType owner_type = 8;
     int32 trademark_class = 9; // must be between 1 and 45
-    int64 created_at = 10;
-    string created_by = 11; // references user id from iam service
-    int64 updated_at = 12;
-    string updated_by = 13; // references user id from iam service
-    bool is_active = 14;
+    bool is_active = 10;
 }

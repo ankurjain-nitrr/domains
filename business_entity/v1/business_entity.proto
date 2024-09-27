@@ -15,12 +15,9 @@ message BusinessEntity {
     commons.v1.Address registered_address = 7;
     repeated Director directors = 8;
     string email = 9;
-    commons.v1.Phone phone = 10;
+    repeated commons.v1.Phone phone = 10;
     string website = 11;
-    string created_at = 12;
-    string created_by = 13;
-    string updated_at = 14;
-    string updated_by = 15;
+    bool is_active = 12;
 }
 
 // Enumeration representing different types of business entities in India
