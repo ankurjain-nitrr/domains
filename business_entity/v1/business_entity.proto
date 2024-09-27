@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package business_entity.v1;
+
+import "commons/v1/address.proto";
+import "commons/v1/phone.proto";
+// Business entity as per indian laws and regulations
+message BusinessEntity {
+    string id = 1;
+    string name = 2;
+    BusinessType entity_type = 3;    // Type of business entity (enumeration provided below)
+    string pan_number = 4;           // PAN (Permanent Account Number) for the business entity
+    string gstin = 5;                // GSTIN (Goods and Services Tax Identification Number), if applicable
+    string cin = 6;                  // CIN (Corporate Identification Number), applicable for companies
+    commons.v1.Address registered_address = 7;
+    repeated Director directors = 8;
+    string email = 9;
+    commons.v1.Phone phone = 10;
+    string website = 11;
+    string created_at = 12;
+    string created_by = 13;
+    string updated_at = 14;
+    string updated_by = 15;
+}
+
+// Enumeration representing different types of business entities in India
+enum BusinessType {
+    BUSINESS_TYPE_UNSPECIFIED = 0; // Unspecified business type
+    SOLE_PROPRIETORSHIP = 1;       // Sole proprietorship
+    PARTNERSHIP = 2;               // Partnership firm
+    LLP = 3;                       // Limited Liability Partnership
+    PRIVATE_LIMITED_COMPANY = 4;   // Private Limited Company
+    PUBLIC_LIMITED_COMPANY = 5;    // Public Limited Company
+    ONE_PERSON_COMPANY = 6;        // One Person Company
+    TRUST = 7;                     // Trust
+    SOCIETY = 8;                   // Society or Co-operative Society
+    SECTION_8_COMPANY = 9;         // Section 8 Company (Non-profit)
+    GOVERNMENT_COMPANY = 10;       // Government-owned Company
+}
+
+message Director {
+    string user_id = 1; // user id of the director, should have a valid KYC
+    string din = 3; // Director Identification Number // optional
+}
+

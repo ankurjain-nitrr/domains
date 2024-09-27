@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package business_entity.v1;
+
+import "business_entity/v1/business_entity.proto";
+
+
+message CreateBusinessEntityRequest {
+    business_entity.v1.BusinessEntity business_entity = 1;
+}
+
+message CreateBusinessEntityResponse {
+    string id = 1;
+}
+
+message GetBusinessEntityRequest {
+    string id = 1;
+}
+
+message GetBusinessEntityResponse {
+    business_entity.v1.BusinessEntity business_entity = 1;
+}
+
+message UpdateBusinessEntityRequest {
+    business_entity.v1.BusinessEntity business_entity = 1;
+}
+
+message UpdateBusinessEntityResponse {
+    business_entity.v1.BusinessEntity business_entity = 1;
+}
+
+message DeleteBusinessEntityRequest {
+    string id = 1;
+}
+
+message DeleteBusinessEntityResponse {
+    bool success = 1;
+}
+
+
+service BusinessEntityService {
+    rpc CreateBusinessEntity(CreateBusinessEntityRequest) returns (CreateBusinessEntityResponse) {}
+    rpc GetBusinessEntity(GetBusinessEntityRequest) returns (GetBusinessEntityResponse) {}
+    rpc UpdateBusinessEntity(UpdateBusinessEntityRequest) returns (UpdateBusinessEntityResponse) {}
+    rpc DeleteBusinessEntity(DeleteBusinessEntityRequest) returns (DeleteBusinessEntityResponse) {}
+}

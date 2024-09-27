@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package bank.v1;
+
+enum AccountType {
+    ACCOUNT_TYPE_UNSPECIFIED = 0;
+    SAVINGS = 1;
+    CURRENT = 2;
+}
+
+enum AccountStatus {
+    ACCOUNT_STATUS_UNSPECIFIED = 0;
+    ACTIVE = 1;
+    INACTIVE = 2; // blocked or closed or inactive for some reason
+}
+
+message BankAccount {
+    string id = 1;
+    string user_id = 2; // id of the user who owns the account, references user id from iam service, must have a valid KYC
+    string account_number = 3;
+    string ifsc_code = 4; // ifsc code of the bank branch
+    AccountType account_type = 5;
+    AccountStatus account_status = 6;
+}

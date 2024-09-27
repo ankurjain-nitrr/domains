@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package bank.v1;
+
+import "bank/v1/bank.proto";
+
+message CreateBankAccountRequest {
+    BankAccount bank_account = 1;
+}
+
+message CreateBankAccountResponse {
+    BankAccount bank_account = 1;
+}
+
+message GetBankAccountRequest {
+    oneof identifier {
+        string bank_account_id = 1;
+        string account_number = 2;
+    }
+}
+
+message GetBankAccountResponse {
+    BankAccount bank_account = 1;
+}
+
+message UpdateBankAccountRequest {
+    BankAccount bank_account = 1;
+}
+
+message UpdateBankAccountResponse {
+    BankAccount bank_account = 1;
+}
+
+// message for marking a bank account as inactive
+message MarkBankAccountAsInactiveRequest {
+    string bank_account_id = 1;
+}
+
+message MarkBankAccountAsInactiveResponse {
+    BankAccount bank_account = 1;
+}
+
+message MarkBankAccountAsActiveRequest {
+    string bank_account_id = 1;
+}
+
+message MarkBankAccountAsActiveResponse {
+    BankAccount bank_account = 1;
+} 
+
+service BankService {
+    rpc CreateBankAccount(CreateBankAccountRequest) returns (CreateBankAccountResponse) {}
+    rpc GetBankAccount(GetBankAccountRequest) returns (GetBankAccountResponse) {}
+    rpc UpdateBankAccount(UpdateBankAccountRequest) returns (UpdateBankAccountResponse) {}
+    rpc MarkBankAccountAsInactive(MarkBankAccountAsInactiveRequest) returns (MarkBankAccountAsInactiveResponse) {}
+    rpc MarkBankAccountAsActive(MarkBankAccountAsActiveRequest) returns (MarkBankAccountAsActiveResponse) {}
+}
+
+
+
+
+
