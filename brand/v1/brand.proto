@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package brand.v1;
+
+import "media/v1/media.proto";
+
+enum BrandOwnerType {
+    BRAND_OWNER_TYPE_UNSPECIFIED = 0;
+    BRAND_OWNER_TYPE_INDIVIDUAL = 1;
+    BRAND_OWNER_TYPE_COMPANY = 2;
+}
+
+message Brand {
+    string id = 1;
+    string name = 2;
+    string tagline = 3;
+    string description = 4;
+    media.v1.Image logo = 5;
+    string website = 6; // must start with http:// or https://
+    string owner_id = 7; // must be registered as user in iam service or business entity in entity service service
+    BrandOwnerType owner_type = 8;
+    int32 trademark_class = 9; // must be between 1 and 45
+    int64 created_at = 10;
+    string created_by = 11; // references user id from iam service
+    int64 updated_at = 12;
+    string updated_by = 13; // references user id from iam service
+    bool is_active = 14;
+}

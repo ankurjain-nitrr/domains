@@ -3,6 +3,7 @@ syntax = "proto3";
 package iam.v1;
 
 import "commons/v1/phone.proto";
+import "commons/v1/address.proto";
 
 message User {
     string id = 1;
@@ -10,11 +11,21 @@ message User {
     string email = 3;
     string password = 4; // hashed password, can be used for authentication
     commons.v1.Phone phone = 5;
-    string created_at = 6;
-    string updated_at = 7;
-    bool is_active = 8;
-    string tenant = 9; // tenant id which was used to create the user
-    repeated string roles = 10; // role ids for the user
+    commons.v1.Address residential_address = 6;
+    KYCDetails kyc_details = 7;
+    string created_at = 8;
+    string updated_at = 9;
+    bool is_active = 10;
+    string tenant = 11; // tenant id which was used to create the user
+    repeated string roles = 12; // role ids for the user
+}
+
+message KYCDetails {
+    string aadhar_card = 1;
+    string pan_card = 2;
+    string driving_license = 3;
+    string passport = 4;
+    string voter_id = 5;
 }
 
 message CreateUserRequest {

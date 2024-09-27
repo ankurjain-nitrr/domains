@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package brand.v1;
+
+import "brand/v1/brand.proto";
+
+message CreateBrandRequest {
+    brand.v1.Brand brand = 1;
+}
+
+message CreateBrandResponse {
+    brand.v1.Brand brand = 1;
+}
+
+message GetBrandRequest {
+    string id = 1;
+}
+
+message GetBrandResponse {
+    brand.v1.Brand brand = 1;
+}
+
+message UpdateBrandRequest {
+    brand.v1.Brand brand = 1;
+}
+
+message UpdateBrandResponse {
+    brand.v1.Brand brand = 1;
+}
+
+message DeleteBrandRequest {
+    string id = 1;
+}
+
+message DeleteBrandResponse {
+    bool success = 1;
+}
+
+service BrandService {
+    rpc CreateBrand(CreateBrandRequest) returns (CreateBrandResponse) {}
+    rpc GetBrand(GetBrandRequest) returns (GetBrandResponse) {}
+    rpc UpdateBrand(UpdateBrandRequest) returns (UpdateBrandResponse) {}
+    rpc DeleteBrand(DeleteBrandRequest) returns (DeleteBrandResponse) {}
+}
+
+
+
+
+
+
+

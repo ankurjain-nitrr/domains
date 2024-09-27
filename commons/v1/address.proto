@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package commons.v1;
+
+// Address as per indian postal standards, conventions and practices
+message Address {
+    string house_no = 1;            // House number or flat number
+    string building_name = 2;       // Name of the building or apartment complex
+    string line_1 = 3;              // Street address or primary address line
+    string line_2 = 4;              // Secondary address line (if needed)
+    string district = 5;            // District name
+    string state = 6;               // State name
+    string pincode = 7;             // 6-digit postal code (PIN code) for India
+    string country = 8;             // Country name (e.g., "India")
+}
+
