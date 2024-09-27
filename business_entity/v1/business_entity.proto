@@ -23,16 +23,16 @@ message BusinessEntity {
 // Enumeration representing different types of business entities in India
 enum BusinessType {
     BUSINESS_TYPE_UNSPECIFIED = 0; // Unspecified business type
-    SOLE_PROPRIETORSHIP = 1;       // Sole proprietorship
-    PARTNERSHIP = 2;               // Partnership firm
-    LLP = 3;                       // Limited Liability Partnership
-    PRIVATE_LIMITED_COMPANY = 4;   // Private Limited Company
-    PUBLIC_LIMITED_COMPANY = 5;    // Public Limited Company
-    ONE_PERSON_COMPANY = 6;        // One Person Company
-    TRUST = 7;                     // Trust
-    SOCIETY = 8;                   // Society or Co-operative Society
-    SECTION_8_COMPANY = 9;         // Section 8 Company (Non-profit)
-    GOVERNMENT_COMPANY = 10;       // Government-owned Company
+    BUSINESS_TYPE_SOLE_PROPRIETORSHIP = 1;       // Sole proprietorship
+    BUSINESS_TYPE_PARTNERSHIP = 2;               // Partnership firm
+    BUSINESS_TYPE_LLP = 3;                       // Limited Liability Partnership
+    BUSINESS_TYPE_PRIVATE_LIMITED_COMPANY = 4;   // Private Limited Company
+    BUSINESS_TYPE_PUBLIC_LIMITED_COMPANY = 5;    // Public Limited Company
+    BUSINESS_TYPE_ONE_PERSON_COMPANY = 6;        // One Person Company
+    BUSINESS_TYPE_TRUST = 7;                     // Trust
+    BUSINESS_TYPE_SOCIETY = 8;                   // Society or Co-operative Society
+    BUSINESS_TYPE_SECTION_8_COMPANY = 9;         // Section 8 Company (Non-profit)
+    BUSINESS_TYPE_GOVERNMENT_COMPANY = 10;       // Government-owned Company
 }
 
 message Director {

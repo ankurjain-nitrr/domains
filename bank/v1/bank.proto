@@ -4,14 +4,14 @@ package bank.v1;
 
 enum AccountType {
     ACCOUNT_TYPE_UNSPECIFIED = 0;
-    SAVINGS = 1;
-    CURRENT = 2;
+    ACCOUNT_TYPE_SAVINGS = 1;
+    ACCOUNT_TYPE_CURRENT = 2;
 }
 
 enum AccountStatus {
     ACCOUNT_STATUS_UNSPECIFIED = 0;
-    ACTIVE = 1;
-    INACTIVE = 2; // blocked or closed or inactive for some reason
+    ACCOUNT_STATUS_ACTIVE = 1;
+    ACCOUNT_STATUS_INACTIVE = 2; // blocked or closed or inactive for some reason
 }
 
 message BankAccount {
