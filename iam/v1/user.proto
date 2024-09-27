@@ -10,8 +10,8 @@ message User {
     string name = 2;
     string email = 3;
     string password = 4; // hashed password, can be used for authentication
-    commons.v1.Phone phone = 5;
-    commons.v1.Address residential_address = 6;
+    repeated commons.v1.Phone phones = 5;
+    commons.v1.Address residential_addresses = 6;
     KYCDetails kyc_details = 7;
     string created_at = 8;
     string updated_at = 9;
@@ -26,64 +26,4 @@ message KYCDetails {
     string driving_license = 3;
     string passport = 4;
     string voter_id = 5;
-}
-
-message CreateUserRequest {
-    User user = 1;
-}
-
-message CreateUserResponse {
-    User user = 1;
-}
-
-message GetUserRequest {
-    string id = 1;
-}
-
-message GetUserResponse {
-    User user = 1;
-}
-
-message UpdateUserRequest {
-    User user = 1;
-}
-
-message UpdateUserResponse {
-    User user = 1;
-}
-
-message DeleteUserRequest {
-    string id = 1;
-}
-
-message DeleteUserResponse {
-    User user = 1;
-}
-
-message AssignRoleRequest {
-    string user_id = 1;
-    string role_id = 2;
-}
-
-message AssignRoleResponse {
-    User user = 1;
-}
-
-message RemoveRoleRequest {
-    string user_id = 1;
-    string role_id = 2;
-}
-
-message RemoveRoleResponse {
-    User user = 1;
-}
-
-
-service UserService {
-    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
-    rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
-    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
-    rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {} // marks the user as inactive
-    rpc AssignRole(AssignRoleRequest) returns (AssignRoleResponse) {}
-    rpc RemoveRole(RemoveRoleRequest) returns (RemoveRoleResponse) {}
 }

@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package iam.v1;
+
+import "iam/v1/user.proto";
+
+message CreateUserRequest {
+    User user = 1;
+}
+
+message CreateUserResponse {
+    User user = 1;
+}
+
+message GetUserRequest {
+    string id = 1;
+}
+
+message GetUserResponse {
+    User user = 1;
+}
+
+message UpdateUserRequest {
+    User user = 1;
+}
+
+message UpdateUserResponse {
+    User user = 1;
+}
+
+message DeleteUserRequest {
+    string id = 1;
+}
+
+message DeleteUserResponse {
+    User user = 1;
+}
+
+message AssignRoleRequest {
+    string user_id = 1;
+    string role_id = 2;
+}
+
+message AssignRoleResponse {
+    User user = 1;
+}
+
+message RemoveRoleRequest {
+    string user_id = 1;
+    string role_id = 2;
+}
+
+message RemoveRoleResponse {
+    User user = 1;
+}
+
+service UserService {
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+    rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
+    rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {} // marks the user as inactive
+    rpc AssignRole(AssignRoleRequest) returns (AssignRoleResponse) {}
+    rpc RemoveRole(RemoveRoleRequest) returns (RemoveRoleResponse) {}
+}
