@@ -16,8 +16,10 @@ enum AccountStatus {
 
 message BankAccount {
     string id = 1;
-    string user_id = 2; // id of the user who owns the account, references user id from iam service, must have a valid KYC
-    string account_number = 3;
+    oneof identifier {
+        string user_id = 2; // id of the user who owns the account, references user id from iam service, must have a valid KYC
+        string business_id = 3; // id of the business who owns the account, references business id from business service
+    }
     string ifsc_code = 4; // ifsc code of the bank branch
     AccountType account_type = 5;
     AccountStatus account_status = 6;
