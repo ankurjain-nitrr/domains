@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package accounting.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message Account {
+    string id = 1;
+    oneof owner {
+        string user_id = 2;
+        string business_entity_id = 3;
+    }
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+}
+

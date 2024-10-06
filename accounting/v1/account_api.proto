@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package accounting.v1;
+
+import "accounting/v1/account.proto";
+
+message CreateAccountRequest {
+    accounting.v1.Account account = 1;
+}
+
+message CreateAccountResponse {
+    accounting.v1.Account account = 1;
+}
+
+message GetAccountRequest {
+    string account_id = 1;
+}
+
+message GetAccountResponse {
+    accounting.v1.Account account = 1;
+}
+
+message UpdateAccountRequest {
+    accounting.v1.Account account = 2;
+}
+
+message UpdateAccountResponse {
+    accounting.v1.Account account = 1;
+}
+
+message DeleteAccountRequest {
+    string account_id = 1;
+}
+
+message DeleteAccountResponse {
+    bool success = 1;
+}
+
+service AccountService {
+    rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}
+    rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {}
+    rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse) {}
+    rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {}
+}
+

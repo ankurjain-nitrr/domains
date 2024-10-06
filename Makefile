@@ -24,7 +24,7 @@ JARS_DIR := $(GEN_DIR)/build/jars
 .PHONY: all generate lint clean help init install-buf install-protoc-gen-go install-protoc-gen-java check_buf check_go check_java check_os install-protoc-gen-grpc-java install-protoc-gen-go-grpc compile-java create-jars
 
 # Default target: clean, lint, and generate
-all: clean lint generate
+all: clean lint deps generate
 	@echo "All tasks completed successfully."
 
 # Initialize the project by installing dependencies (macOS only)

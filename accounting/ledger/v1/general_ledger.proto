@@ -7,26 +7,16 @@ import "google/type/money.proto"; // Importing Google's Money type'
 message GeneralLedger {
     string id = 1; // id of the general ledger
     string tenant_id = 2; // tenant id
-    oneof owner {
-        string customer_id = 3; // id of the customer
-        string vendor_id = 4; // id of the vendor
-    }
-    google.type.Money balance = 5; // balance of the general ledger
-    int64 created_at = 6; // created at timestamp
-    int64 updated_at = 7; // updated at timestamp
-}
-
-message TransactionParty {
-    oneof transaction_party {
-        string customer_id = 1; // id of the customer
-        string vendor_id = 2; // id of the vendor
-    }
+    string account_id = 3; // id of the account
+    google.type.Money balance = 4; // balance of the general ledger
+    int64 created_at = 5; // created at timestamp
+    int64 updated_at = 6; // updated at timestamp
 }
 
 message GeneralLedgerEntry {
     string id = 1; // id of the general ledger entry
     string ledger_id = 2; // id of the general ledger
-    TransactionParty transaction_party = 3; // transaction party
+    string account_id = 3; // id of the account against which the transaction is made
     GeneralLedgerType general_ledger_type = 4; // type of the general ledger
     EntryType entry_type = 5; // type of the entry
     google.type.Money amount = 6; // amount of the transaction
