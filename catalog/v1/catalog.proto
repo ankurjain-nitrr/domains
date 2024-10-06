@@ -1,0 +1,155 @@
+syntax = "proto3";
+
+package catalog.v1;
+
+import "media/v1/media.proto";
+
+message Catalog {
+    string id = 1; // id of the catalog
+    string name = 2; // name of the catalog
+    string description = 3; // description of the catalog
+    repeated media.v1.Image images = 4; // images of the catalog
+    repeated Category categories = 5; // categories of the catalog
+}
+
+// nested message for category
+message Category {
+    string id = 1; // id of the category
+    string name = 2; // name of the category
+    string description = 3; // description of the category
+    repeated media.v1.Image images = 4; // images of the category
+    repeated Category subcategories = 5; // subcategories of the category
+    repeated Attribute attributes = 6; // attributes of the category
+}
+
+enum AttributeType {
+    ATTRIBUTE_TYPE_UNSPECIFIED = 0;
+    ATTRIBUTE_TYPE_TEXT = 1; // validation based on length, regex, or specific values
+    ATTRIBUTE_TYPE_NUMBER = 2; // validation based on range or specific values
+    ATTRIBUTE_TYPE_BOOLEAN = 3;
+    ATTRIBUTE_TYPE_DECIMAL = 4;
+    ATTRIBUTE_TYPE_COLLECTION = 5;
+    ATTRIBUTE_TYPE_COMPLEX = 6;
+    ATTRIBUTE_TYPE_IMAGE = 8;
+}
+
+// Attribute is a key-value pair that can be used to filter the catalog
+message Attribute {
+    string id = 1; // id of the attribute
+    string name = 2; // name of the attribute
+    string description = 3; // description of the attribute
+    media.v1.Image icon = 4; // icon of the attribute
+    AttributeConstraints attribute_constraints = 5; // constraints for the attribute    
+    bool is_required = 6; // whether the attribute is required
+    bool is_unique = 7; // whether the attribute is unique
+    bool is_visible = 8; // whether the attribute is visible to the user
+    bool is_active = 9; // whether the attribute is active
+}
+
+message AttributeConstraints {
+    // generic constraints for all attribute types
+    AttributeType attribute_type = 1; // type of the attribute
+    oneof constraints {
+        TextAttributeConstraints text_attribute_constraints = 2; // constraints for the text attribute
+        NumberAttributeConstraints number_attribute_constraints = 3; // constraints for the number attribute
+        DecimalAttributeConstraints decimal_attribute_constraints = 4; // constraints for the decimal attribute
+        CollectionAttributeConstraints collection_attribute_constraints = 5; // constraints for the collection attribute
+        ComplexAttributeConstraints complex_attribute_constraints = 6; // constraints for the complex attribute
+    }
+}
+
+message TextAttributeConstraints {
+    int32 min_length = 1; // minimum length of the text
+    int32 max_length = 2; // maximum length of the text
+    string regex = 3; // regex for the text
+    repeated string allowed_values = 4; // allowed values for the text
+}
+
+message NumberAttributeConstraints {
+    double min_value = 1; // minimum value of the number
+    double max_value = 2; // maximum value of the number
+    repeated double allowed_values = 3; // allowed values for the number
+}
+
+message DecimalAttributeConstraints {
+    double min_value = 1; // minimum value of the decimal
+    double max_value = 2; // maximum value of the decimal
+    repeated double allowed_values = 3; // allowed values for the decimal
+    int32 precision = 4; // precision of the decimal
+    double epsilon = 5; // epsilon for the decimal
+}
+
+message CollectionAttributeConstraints {
+    AttributeConstraints element_constraints = 1; // constraints for the elements in the collection
+    int32 min_size = 2; // minimum size of the collection
+    int32 max_size = 3; // maximum size of the collection
+}
+
+message ComplexAttributeConstraints {
+    repeated Attribute attributes = 1; // attributes of the complex attribute
+}
+
+message ImageAttributeConstraints {
+    int32 min_width = 1; // minimum width of the image
+    int32 max_width = 2; // maximum width of the image
+    int32 min_height = 3; // minimum height of the image
+    int32 max_height = 4; // maximum height of the image
+    int32 min_size = 5; // minimum size of the image
+    int32 max_size = 6; // maximum size of the image
+    repeated string allowed_mime_types = 7; // allowed mime types for the image
+    repeated string allowed_file_extensions = 8; // allowed file extensions for the image
+}
+
+message AttributeValue {
+    string attribute_id = 1; // id of the attribute
+    oneof value {
+        string string_value = 2;
+        int32 int_value = 3;
+        double decimal_value = 4;
+        bool boolean_value = 5;
+        string reference_value = 6; // reference to a existing attribute value
+        NumberCollectionValue number_collection_value = 7;
+        StringCollectionValue string_collection_value = 8;
+        BooleanCollectionValue boolean_collection_value = 9;
+        DecimalCollectionValue decimal_collection_value = 10;
+        ComplexCollectionValue complex_collection_value = 11;
+        ReferenceValueCollection reference_value_collection = 12;
+    }
+}
+
+message NumberCollectionValue {
+    repeated double values = 1; // values of the number collection
+}
+
+message StringCollectionValue {
+    repeated string values = 1; // values of the string collection
+}
+
+message BooleanCollectionValue {
+    repeated bool values = 1; // values of the boolean collection
+}
+
+message DecimalCollectionValue {
+    repeated double values = 1; // values of the decimal collection
+}
+
+message ComplexCollectionValue {
+    repeated AttributeValue values = 1; // values of the complex collection
+}
+
+message ReferenceValueCollection {
+    repeated string values = 1; // values of the reference collection
+}
+
+// IdentifiedComplexValue is a complex value with an id which can be used for referencing the value across different items
+message IdentifiedComplexValue {
+    string id = 1; // id of the complex value
+    AttributeValue value = 2; // value of the complex value
+}
+
+message Item {
+    string id = 1; // id of the item
+    string name = 2; // name of the item
+    string description = 3; // description of the item
+    repeated AttributeValue attributes = 5; // attributes of the item
+}

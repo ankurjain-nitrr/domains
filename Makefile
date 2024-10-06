@@ -21,7 +21,7 @@ JARS_DIR := $(GEN_DIR)/build/jars
 .DEFAULT_GOAL := all
 
 # PHONY targets
-.PHONY: all generate lint clean help init install-buf install-protoc-gen-go install-protoc-gen-java check_buf check_go check_java check_os install-protoc-gen-grpc-java install-protoc-gen-go-grpc compile-java create-jars
+.PHONY: all generate lint clean help init install-buf install-protoc-gen-go install-protoc-gen-java check_buf check_go check_java check_os install-protoc-gen-grpc-java install-protoc-gen-go-grpc compile-java create-jars check_brew check_maven install-maven deps
 
 # Default target: clean, lint, and generate
 all: clean lint deps generate
@@ -147,3 +147,4 @@ deps:
 	@echo "Downloading dependencies..."
 	@buf dep update
 	@echo "Dependencies downloaded."
+
