@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package accounting.ledger.v1;
+
+import "google/type/money.proto"; // Importing Google's Money type'
+
+message GeneralLedger {
+    string id = 1; // id of the general ledger
+    string tenant_id = 2; // tenant id
+    oneof owner {
+        string customer_id = 3; // id of the customer
+        string vendor_id = 4; // id of the vendor
+    }
+    google.type.Money balance = 5; // balance of the general ledger
+    int64 created_at = 6; // created at timestamp
+    int64 updated_at = 7; // updated at timestamp
+}
+
+message TransactionParty {
+    oneof transaction_party {
+        string customer_id = 1; // id of the customer
+        string vendor_id = 2; // id of the vendor
+    }
+}
+
+message GeneralLedgerEntry {
+    string id = 1; // id of the general ledger entry
+    string ledger_id = 2; // id of the general ledger
+    TransactionParty transaction_party = 3; // transaction party
+    GeneralLedgerType general_ledger_type = 4; // type of the general ledger
+    EntryType entry_type = 5; // type of the entry
+    google.type.Money amount = 6; // amount of the transaction
+    int64 entry_date = 7; // date of the transaction
+    string description = 8; // description of the transaction
+    string reference_id = 9; // reference id of the transaction
+}
+
+enum GeneralLedgerType {
+    GENERAL_LEDGER_TYPE_UNSPECIFIED = 0;
+    GENERAL_LEDGER_TYPE_ASSET = 1; // Cash, Debtor, Inventory, etc.
+    GENERAL_LEDGER_TYPE_LIABILITY = 2; // Creditor, Loan, etc.
+    GENERAL_LEDGER_TYPE_EQUITY = 3; // Owner's Equity, Shareholders' Equity, etc.
+    GENERAL_LEDGER_TYPE_INCOME = 4; // Sales Revenue, Interest Income, etc.
+    GENERAL_LEDGER_TYPE_EXPENSE = 5; // Rent Expense, Salaries Expense, etc.
+    GENERAL_LEDGER_TYPE_REVENUE = 6; // Sales Revenue, Interest Revenue, etc.
+    GENERAL_LEDGER_TYPE_GAIN = 7; // For non-operating gains
+    GENERAL_LEDGER_TYPE_LOSS = 8; // For non-operating losses
+    GENERAL_LEDGER_TYPE_OTHER = 9; // For other types of general ledger
+}
+
+enum EntryType {
+    ENTRY_TYPE_UNSPECIFIED = 0;
+    ENTRY_TYPE_DEBIT = 1;
+    ENTRY_TYPE_CREDIT = 2;
+}
+
+enum TransactionType {
+    TRANSACTION_TYPE_UNSPECIFIED = 0;
+    TRANSACTION_TYPE_SALES = 1; // Sale of goods/services
+    TRANSACTION_TYPE_PURCHASE = 2; // Purchase of goods/services
+    TRANSACTION_TYPE_RECEIPT = 3; // Money received (e.g., from customers)
+    TRANSACTION_TYPE_EXPENSE = 4; // General expenses not covered by other types
+    TRANSACTION_TYPE_TAX_PAYMENT = 5; // Payment of taxes
+    TRANSACTION_TYPE_LOAN_ISSUANCE = 6; // Loan given out
+    TRANSACTION_TYPE_LOAN_REPAYMENT = 7; // Repayment of loan
+    TRANSACTION_TYPE_DIVIDEND_PAYMENT = 8; // Payment of dividends to shareholders
+    TRANSACTION_TYPE_RETURN = 9; // Return of goods (from customer or to vendor)
+    TRANSACTION_TYPE_CANCELLATION = 10; // Transaction reversal
+    TRANSACTION_TYPE_OTHER = 11; // Other types not covered explicitly
+}

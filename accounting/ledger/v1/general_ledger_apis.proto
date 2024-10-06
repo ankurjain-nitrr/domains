@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package accounting.ledger.v1;
+
+import "accounting/ledger/v1/general_ledger.proto";
+
+message CreateGeneralLedgerRequest {
+    accounting.ledger.v1.GeneralLedger general_ledger = 1;
+}
+
+message CreateGeneralLedgerResponse {
+    accounting.ledger.v1.GeneralLedger general_ledger = 1;
+}
+
+message GetGeneralLedgerRequest {
+    string general_ledger_id = 1;
+}
+
+message GetGeneralLedgerResponse {
+    accounting.ledger.v1.GeneralLedger general_ledger = 1;
+}
+
+message UpdateGeneralLedgerRequest {
+    string general_ledger_id = 1;
+    accounting.ledger.v1.GeneralLedger general_ledger = 2;
+}
+
+message UpdateGeneralLedgerResponse {
+    accounting.ledger.v1.GeneralLedger general_ledger = 1;
+}
+
+message DeleteGeneralLedgerRequest {
+    string general_ledger_id = 1;
+}
+
+message DeleteGeneralLedgerResponse {
+    bool success = 1;
+}
+
+// Create general ledger entry
+message CreateGeneralLedgerEntryRequest {
+    accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
+}
+
+message CreateGeneralLedgerEntryResponse {
+    accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
+}
+
+message GetGeneralLedgerEntryRequest {
+    string general_ledger_entry_id = 1;
+}
+
+message GetGeneralLedgerEntryResponse {
+    accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
+}
+
+message UpdateGeneralLedgerEntryRequest {
+    accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 2;
+}
+
+message UpdateGeneralLedgerEntryResponse {
+    accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
+}
+
+message ListGeneralLedgerEntriesRequest {
+    string general_ledger_id = 1;
+    int32 page_size = 2;
+    string page_token = 3;
+}
+
+message ListGeneralLedgerEntriesResponse {
+    repeated accounting.ledger.v1.GeneralLedgerEntry general_ledger_entries = 1;
+    string next_page_token = 2;
+}
+
+service GeneralLedgerService {
+    rpc CreateGeneralLedger(CreateGeneralLedgerRequest) returns (CreateGeneralLedgerResponse) {}
+    rpc GetGeneralLedger(GetGeneralLedgerRequest) returns (GetGeneralLedgerResponse) {}
+    rpc UpdateGeneralLedger(UpdateGeneralLedgerRequest) returns (UpdateGeneralLedgerResponse) {}
+    rpc DeleteGeneralLedger(DeleteGeneralLedgerRequest) returns (DeleteGeneralLedgerResponse) {}
+    rpc CreateGeneralLedgerEntry(CreateGeneralLedgerEntryRequest) returns (CreateGeneralLedgerEntryResponse) {}
+    rpc GetGeneralLedgerEntry(GetGeneralLedgerEntryRequest) returns (GetGeneralLedgerEntryResponse) {}
+    rpc UpdateGeneralLedgerEntry(UpdateGeneralLedgerEntryRequest) returns (UpdateGeneralLedgerEntryResponse) {}
+    rpc ListGeneralLedgerEntries(ListGeneralLedgerEntriesRequest) returns (ListGeneralLedgerEntriesResponse) {}
+}

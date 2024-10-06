@@ -9,22 +9,26 @@ PROTO_DIR := proto
 BUF_VERSION := 1.17.0
 PROTOC_GEN_GO_VERSION := v1.28.0
 PROTOC_GEN_JAVA_VERSION := 3.21.7
+PROTOBUF_VERSION := 3.21.7
+
 
 GRPC_JAVA_VERSION := 1.68.0
 PROTOC_GEN_GRPC_JAVA_PATH := $(HOME)/bin/protoc-gen-grpc-java
-
+JAVA_SRC_DIR := $(GEN_DIR)/proto/java
+JAVA_BUILD_DIR := $(GEN_DIR)/build/java
+JARS_DIR := $(GEN_DIR)/build/jars
 # Define the default target
 .DEFAULT_GOAL := all
 
 # PHONY targets
-.PHONY: all generate lint clean help init install-buf install-protoc-gen-go install-protoc-gen-java check_buf check_go check_java check_os install-protoc-gen-grpc-java install-protoc-gen-go-grpc
+.PHONY: all generate lint clean help init install-buf install-protoc-gen-go install-protoc-gen-java check_buf check_go check_java check_os install-protoc-gen-grpc-java install-protoc-gen-go-grpc compile-java create-jars
 
 # Default target: clean, lint, and generate
 all: clean lint generate
 	@echo "All tasks completed successfully."
 
 # Initialize the project by installing dependencies (macOS only)
-init: check_os check_brew check_go check_java install-buf install-protoc-gen-go install-protoc-gen-java install-protoc-gen-go-grpc install-protoc-gen-grpc-java
+init: check_os check_brew check_go check_java install-buf install-protoc-gen-go install-protoc-gen-java install-protoc-gen-go-grpc install-protoc-gen-grpc-java install-maven
 	@echo "Initialization complete."
 
 # Check if running on macOS
@@ -60,17 +64,22 @@ install-protoc-gen-go: check_brew check_go
 	fi
 
 install-protoc-gen-grpc-java: 
-	@echo "Installing protoc-gen-grpc-java..."
-	@mkdir -p $(HOME)/bin
-	@curl -L https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/$(GRPC_JAVA_VERSION)/protoc-gen-grpc-java-$(GRPC_JAVA_VERSION)-osx-x86_64.exe -o $(PROTOC_GEN_GRPC_JAVA_PATH)
-	@chmod +x $(PROTOC_GEN_GRPC_JAVA_PATH)
+	@echo "Checking protoc-gen-grpc-java installation..."
+	@if [ ! -f "$(PROTOC_GEN_GRPC_JAVA_PATH)" ]; then \
+		echo "Installing protoc-gen-grpc-java..."; \
+		mkdir -p $(HOME)/bin; \
+		curl -L https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/$(GRPC_JAVA_VERSION)/protoc-gen-grpc-java-$(GRPC_JAVA_VERSION)-osx-x86_64.exe -o $(PROTOC_GEN_GRPC_JAVA_PATH); \
+		chmod +x $(PROTOC_GEN_GRPC_JAVA_PATH); \
+	else \
+		echo "protoc-gen-grpc-java is already installed."; \
+	fi
 
 install-protoc-gen-go-grpc:
 	@echo "Installing protoc-gen-go-grpc..."
 	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 # Generate code from proto files
-generate: check_buf
+generate: check_buf deps
 	@echo "Generating code..."
 	@buf generate
 	@echo "Code generation complete."
@@ -114,3 +123,27 @@ check_go:
 # Check if Java is installed
 check_java:
 	@which java > /dev/null || (echo "Error: Java is not installed. Please install Java from https://adoptopenjdk.net/" && exit 1)
+
+# Compile Java files
+compile-java: generate check_maven
+	@echo "Compiling Java files for Java $(JAVA_VERSION)..."
+	@$(MVN) compile -P java$(JAVA_VERSION)
+
+# Check if Maven is installed
+check_maven:
+	@which mvn > /dev/null || (echo "Error: Maven is not installed. Please install Maven from https://maven.apache.org/install.html" && exit 1)
+
+install-maven: check_brew
+	@echo "Checking Maven installation..."
+	@if ! command -v mvn &> /dev/null; then \
+		echo "Installing Maven..."; \
+		brew install maven; \
+	else \
+		echo "Maven is already installed."; \
+	fi
+
+# Download dependencies
+deps:
+	@echo "Downloading dependencies..."
+	@buf dep update
+	@echo "Dependencies downloaded."

@@ -6,3 +6,5 @@ breaking:
 lint:
   use:
     - STANDARD
+deps:
+  - "buf.build/googleapis/googleapis"
