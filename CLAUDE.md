@@ -1,6 +1,7 @@
 # domains
 
-Protobuf domain models and gRPC service definitions, one directory per domain (`<domain>/v1/*.proto`).
+Protobuf domain models and gRPC service definitions, one directory per domain (`<domain>/v1/*.proto`): resources
+in `<name>.proto`, the service and its requests in `<name>_api.proto`, and requests identify a resource by `id`.
 Built with `buf` (see `Makefile`, `buf.yaml`); generated code goes to `gen/` and is not committed.
 
 ## API design
@@ -25,7 +26,8 @@ All domains must interoperate through entities and ARNs, not through knowledge o
   any entity type. A like works on a `Product` exactly as on a social `Content` post. Never couple them to one
   domain: no `post_id` fields, no `LikeProduct` RPCs, no imports of another domain's resource messages.
 - Use an ARN wherever a field can point at more than one entity type; use a plain `<entity>_id` only when the type
-  is fixed (e.g. `user_id` of the acting user).
+  is fixed (e.g. `user_id` of the acting user). A user-or-business-entity owner is `owner_arn`, validated with
+  `(validation.v1.owner_arn)`.
 - Behavior specific to an entity type belongs to the domain that owns that entity, not to the generic capability.
 
 ## Checks
