@@ -3,6 +3,7 @@ syntax = "proto3";
 package bank.v1;
 
 import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
 import "validation/v1/rules.proto";
 
 // Type of a bank account.
@@ -15,20 +16,26 @@ enum AccountType {
   ACCOUNT_TYPE_CURRENT = 2;
 }
 
-// Lifecycle state of a bank account.
-enum AccountState {
-  // Unspecified. Not a valid value.
-  ACCOUNT_STATE_UNSPECIFIED = 0;
-  // The account can be used.
-  ACCOUNT_STATE_ACTIVE = 1;
-  // Blocked or closed or inactive for some reason.
-  ACCOUNT_STATE_INACTIVE = 2;
-}
-
 // A bank account held in India, owned by a user or a business entity.
 message BankAccount {
-  // Owner of the account.
-  BankAccountOwner owner = 1;
+  // Lifecycle state of a bank account.
+  enum State {
+    // Unspecified. Not a valid value.
+    STATE_UNSPECIFIED = 0;
+    // The account can be used.
+    STATE_ACTIVE = 1;
+    // Blocked or closed or inactive for some reason.
+    STATE_INACTIVE = 2;
+  }
+
+  // Unique identifier of the bank account.
+  string id = 6;
+  // Owner of the account: a user (with a valid KYC) or a business entity, e.g. shop:User:u_1.
+  string owner_arn = 7 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true,
+    (buf.validate.field).string.(validation.v1.owner_arn) = true
+  ];
   // Account number, 9 to 18 digits.
   string account_number = 2 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
@@ -41,18 +48,14 @@ message BankAccount {
   ];
   // Type of the account.
   AccountType account_type = 4 [(buf.validate.field).enum.defined_only = true];
-  // Lifecycle state of the account.
-  AccountState account_state = 5 [(buf.validate.field).enum.defined_only = true];
-}
+  // Lifecycle state of the account. Set by MarkBankAccountAsActive and MarkBankAccountAsInactive.
+  State state = 8 [(buf.validate.field).enum.defined_only = true];
+  // Time the bank account was created. Output only.
+  google.protobuf.Timestamp create_time = 9;
+  // Time the bank account was last updated. Output only.
+  google.protobuf.Timestamp update_time = 10;
 
-// The user or business entity that owns a bank account.
-message BankAccountOwner {
-  // How the user is identified.
-  oneof identifier {
-    option (buf.validate.oneof).required = true;
-    // Id of the user who owns the account, references user id from iam service, must have a valid KYC.
-    string user_id = 1 [(buf.validate.field).string.min_len = 1];
-    // Id of the business who owns the account, references business id from business service.
-    string business_id = 2 [(buf.validate.field).string.min_len = 1];
-  }
+  // replaced by owner_arn and state
+  reserved 1, 5;
+  reserved "owner", "account_state";
 }

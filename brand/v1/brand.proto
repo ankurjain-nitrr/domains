@@ -38,12 +38,7 @@ message Brand {
   // Set at creation.
   string owner_arn = 11 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
-    (buf.validate.field).string.(validation.v1.entity_arn) = true,
-    (buf.validate.field).cel = {
-      id: "brand.owner_arn_type"
-      message: "owner_arn must be a User or a BusinessEntity"
-      expression: "this.matches('^[^:]+:(User|BusinessEntity):[^:]+$')"
-    }
+    (buf.validate.field).string.(validation.v1.owner_arn) = true
   ];
   // Time the brand was created. Output only.
   google.protobuf.Timestamp create_time = 12;

@@ -34,9 +34,9 @@ message Permission {
   string tenant = 7;
   // Whether the permission is active.
   bool is_active = 8;
-  // Time the permission was created.
+  // Time the permission was created. Output only.
   google.protobuf.Timestamp create_time = 9;
-  // Time the permission was last updated.
+  // Time the permission was last updated. Output only.
   google.protobuf.Timestamp update_time = 10;
 
   // A list of actions a permission allows.
@@ -63,9 +63,9 @@ message Role {
   string name = 2;
   // Description of the role.
   string description = 3;
-  // Time the role was created.
+  // Time the role was created. Output only.
   google.protobuf.Timestamp create_time = 4;
-  // Time the role was last updated.
+  // Time the role was last updated. Output only.
   google.protobuf.Timestamp update_time = 5;
   // References permission id from permission service.
   repeated string permissions = 6 [(buf.validate.field).repeated = {

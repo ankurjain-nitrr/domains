@@ -36,8 +36,12 @@ message CreateBusinessEntityRequest {
 
 // Response message for BusinessEntityService.CreateBusinessEntity.
 message CreateBusinessEntityResponse {
-  // Id of the created business entity.
-  string id = 1;
+  // The created business entity.
+  business_entity.v1.BusinessEntity business_entity = 2;
+
+  // replaced by business_entity
+  reserved 1;
+  reserved "id";
 }
 
 // Request message for BusinessEntityService.GetBusinessEntity.

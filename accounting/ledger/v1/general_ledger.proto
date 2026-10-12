@@ -16,9 +16,9 @@ message GeneralLedger {
   string account_id = 3;
   // Balance of the general ledger.
   google.type.Money balance = 4;
-  // Time the ledger was created.
+  // Time the ledger was created. Output only.
   google.protobuf.Timestamp create_time = 5;
-  // Time the ledger was last updated.
+  // Time the ledger was last updated. Output only.
   google.protobuf.Timestamp update_time = 6;
 }
 

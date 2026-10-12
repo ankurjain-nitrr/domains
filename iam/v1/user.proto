@@ -27,9 +27,9 @@ message User {
   commons.v1.Address residential_addresses = 6;
   // Identity documents of the user.
   KycDetails kyc_details = 7;
-  // Time the user was created.
+  // Time the user was created. Output only.
   google.protobuf.Timestamp create_time = 8;
-  // Time the user was last updated.
+  // Time the user was last updated. Output only.
   google.protobuf.Timestamp update_time = 9;
   // Whether the user is active.
   bool is_active = 10;

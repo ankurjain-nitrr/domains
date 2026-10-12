@@ -22,6 +22,7 @@ message Comment {
 - Name timestamp fields `<imperative verb>_time`: `create_time`, `update_time`, `delete_time`,
   `expire_time`, `moderate_time`. Do not use `created_at` / `updated_at` style names.
 - Ranges over a timestamp field are named after it: `create_time_range` (type `commons.v1.TimeRange`).
+- End the comment of a server-set field with `Output only.`, e.g. `// Time the brand was created. Output only.`
 
 Reference: [AIP-142 Time and duration](https://google.aip.dev/142).
 
@@ -132,7 +133,7 @@ message CreateBrandRequest {
 
 `validation/v1/rules.proto` holds reusable string rules (protovalidate predefined rules) for identifiers used across
 domains: `entity_arn`, `pan`, `gstin`, `cin`, `ifsc`, `pincode`, `aadhaar`, `din`, `phone_e164`, `calling_code`,
-`http_url`. Use them as `(buf.validate.field).string.(validation.v1.<name>) = true`. Add a rule there instead of
+`http_url`, `owner_arn`. Use them as `(buf.validate.field).string.(validation.v1.<name>) = true`. Add a rule there instead of
 repeating a pattern when a format is used in more than one place. The file is proto2, because predefined rules are
 extensions. Extension numbers come from the private range 50000-99999 and must be unique per extended message.
 

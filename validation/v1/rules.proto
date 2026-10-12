@@ -77,4 +77,10 @@ extend buf.validate.StringRules {
     id: "string.http_url"
     expression: "!rule || (this.isUri() && this.matches('^https?://')) ? '' : 'must be an http:// or https:// URL'"
   }];
+
+  // entity arn of a user or a business entity, the owners of brands, bank accounts and accounts
+  optional bool owner_arn = 50012 [(buf.validate.predefined).cel = {
+    id: "string.owner_arn"
+    expression: "!rule || this.matches('^[^:]+:(User|BusinessEntity):[^:]+$') ? '' : 'must be the arn of a User or a BusinessEntity'"
+  }];
 }

@@ -20,9 +20,9 @@ message Comment {
   ];
   // Comments can be text only.
   string content = 4;
-  // Time the comment was created.
+  // Time the comment was created. Output only.
   google.protobuf.Timestamp create_time = 5;
-  // Time the comment was last updated.
+  // Time the comment was last updated. Output only.
   google.protobuf.Timestamp update_time = 6;
   // Id of the comment this replies to; empty for top-level comments.
   string parent_comment_id = 7;

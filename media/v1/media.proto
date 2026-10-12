@@ -92,7 +92,7 @@ message RenditionPreset {
   RenditionSpec spec = 4;
   // Whether to generate it for every new media item of media_type. Otherwise it's generated on request.
   bool eager = 5;
-  // Time the preset was created.
+  // Time the preset was created. Output only.
   google.protobuf.Timestamp create_time = 6;
 }
 
@@ -233,9 +233,9 @@ message Media {
   }
   // Why processing failed, e.g. unsupported format. Set when FAILED.
   string failure_reason = 8;
-  // Time the media item was created.
+  // Time the media item was created. Output only.
   google.protobuf.Timestamp create_time = 9;
-  // Time the media item was last updated.
+  // Time the media item was last updated. Output only.
   google.protobuf.Timestamp update_time = 10;
 }
 

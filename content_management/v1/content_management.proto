@@ -32,11 +32,11 @@ message Content {
   repeated media.v1.Video videos = 5;
   // Id of the user who created the content, references iam.
   string creator = 6;
-  // Time the content was created.
+  // Time the content was created. Output only.
   google.protobuf.Timestamp create_time = 7;
   // Id of the user who last updated the content (the author or a moderator), references iam.
   string updater = 8;
-  // Time the content was last updated.
+  // Time the content was last updated. Output only.
   google.protobuf.Timestamp update_time = 9;
   // Publishing state. Set by CreateContent, PublishContent and ArchiveContent.
   State state = 10 [(buf.validate.field).enum.defined_only = true];

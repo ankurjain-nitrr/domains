@@ -2,21 +2,26 @@ syntax = "proto3";
 
 package accounting.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "validation/v1/rules.proto";
 
 // An account in the accounting domain, owned by a user or a business entity.
 message Account {
   // Unique identifier of the account.
   string id = 1;
-  // Owner of the account.
-  oneof owner {
-    // Id of the owning user, references iam.
-    string user_id = 2;
-    // Id of the owning business entity.
-    string business_entity_id = 3;
-  }
-  // Time the account was created.
+  // Owner of the account: a user or a business entity, e.g. shop:BusinessEntity:b_1.
+  string owner_arn = 8 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true,
+    (buf.validate.field).string.(validation.v1.owner_arn) = true
+  ];
+  // Time the account was created. Output only.
   google.protobuf.Timestamp create_time = 6;
-  // Time the account was last updated.
+  // Time the account was last updated. Output only.
   google.protobuf.Timestamp update_time = 7;
+
+  // replaced by owner_arn
+  reserved 2, 3;
+  reserved "user_id", "business_entity_id";
 }

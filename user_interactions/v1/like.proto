@@ -22,7 +22,7 @@ message Like {
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.entity_arn) = true
   ];
-  // Time the like was created.
+  // Time the like was created. Output only.
   google.protobuf.Timestamp create_time = 4;
 }
 

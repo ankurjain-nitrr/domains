@@ -11,9 +11,9 @@ message CreateAccountRequest {
   accounting.v1.Account account = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
-      id: "account.owner"
-      message: "owner is required"
-      expression: "has(this.user_id) || has(this.business_entity_id)"
+      id: "account.owner_arn"
+      message: "owner_arn is required"
+      expression: "this.owner_arn != ''"
     }
   ];
 }
@@ -27,7 +27,7 @@ message CreateAccountResponse {
 // Request message for AccountService.GetAccount.
 message GetAccountRequest {
   // Id of the account to get.
-  string account_id = 1 [(buf.validate.field).required = true];
+  string id = 1 [(buf.validate.field).required = true];
 }
 
 // Response message for AccountService.GetAccount.
@@ -51,7 +51,7 @@ message UpdateAccountResponse {
 // Request message for AccountService.DeleteAccount.
 message DeleteAccountRequest {
   // Id of the account to delete.
-  string account_id = 1 [(buf.validate.field).required = true];
+  string id = 1 [(buf.validate.field).required = true];
 }
 
 // Response message for AccountService.DeleteAccount.

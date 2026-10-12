@@ -32,7 +32,7 @@ message CreateGeneralLedgerResponse {
 // Request message for GeneralLedgerService.GetGeneralLedger.
 message GetGeneralLedgerRequest {
   // Id of the general ledger to get.
-  string general_ledger_id = 1 [(buf.validate.field).required = true];
+  string id = 1 [(buf.validate.field).required = true];
 }
 
 // Response message for GeneralLedgerService.GetGeneralLedger.
@@ -60,7 +60,7 @@ message UpdateGeneralLedgerResponse {
 // Request message for GeneralLedgerService.DeleteGeneralLedger.
 message DeleteGeneralLedgerRequest {
   // Id of the general ledger to delete.
-  string general_ledger_id = 1 [(buf.validate.field).required = true];
+  string id = 1 [(buf.validate.field).required = true];
 }
 
 // Response message for GeneralLedgerService.DeleteGeneralLedger.
@@ -111,7 +111,7 @@ message CreateGeneralLedgerEntryResponse {
 // Request message for GeneralLedgerService.GetGeneralLedgerEntry.
 message GetGeneralLedgerEntryRequest {
   // Id of the general ledger entry to get.
-  string general_ledger_entry_id = 1 [(buf.validate.field).required = true];
+  string id = 1 [(buf.validate.field).required = true];
 }
 
 // Response message for GeneralLedgerService.GetGeneralLedgerEntry.

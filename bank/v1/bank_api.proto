@@ -5,6 +5,7 @@ package bank.v1;
 import "bank/v1/bank.proto";
 import "buf/validate/validate.proto";
 import "google/protobuf/field_mask.proto";
+import "validation/v1/rules.proto";
 
 // Request message for BankService.CreateBankAccount.
 message CreateBankAccountRequest {
@@ -12,9 +13,9 @@ message CreateBankAccountRequest {
   BankAccount bank_account = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
-      id: "bank_account.owner"
-      message: "owner is required"
-      expression: "has(this.owner)"
+      id: "bank_account.owner_arn"
+      message: "owner_arn is required"
+      expression: "this.owner_arn != ''"
     },
     (buf.validate.field).cel = {
       id: "bank_account.account_number"
@@ -42,8 +43,8 @@ message CreateBankAccountResponse {
 
 // Request message for BankService.GetBankAccount.
 message GetBankAccountRequest {
-  // Account number of the bank account to get.
-  string account_number = 1 [(buf.validate.field).required = true];
+  // Id of the bank account to get.
+  string id = 1 [(buf.validate.field).required = true];
 }
 
 // Response message for BankService.GetBankAccount.
@@ -54,8 +55,12 @@ message GetBankAccountResponse {
 
 // Request message for BankService.ListBankAccounts.
 message ListBankAccountsRequest {
-  // Owner whose bank accounts to list.
-  BankAccountOwner owner = 1 [(buf.validate.field).required = true];
+  // Owner of the bank accounts to list, a user or business entity arn.
+  string owner_arn = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true,
+    (buf.validate.field).string.(validation.v1.owner_arn) = true
+  ];
   // Maximum number of results to return. The server applies a default and a maximum.
   int64 page_size = 2 [(buf.validate.field).int64.gte = 0];
   // Page token from a previous response's next_page_token. Empty for the first page.
@@ -70,12 +75,18 @@ message ListBankAccountsResponse {
   string next_page_token = 2;
 }
 
-// account_state cannot be updated here, use MarkBankAccountAsActive / MarkBankAccountAsInactive
+// state cannot be updated here, use MarkBankAccountAsActive / MarkBankAccountAsInactive
 message UpdateBankAccountRequest {
-  // The bank account to update. Its account_number identifies the bank account.
+  // The bank account to update. Its id identifies the bank account.
   BankAccount bank_account = 1 [(buf.validate.field).required = true];
   // fields to update; if omitted, all fields set in bank_account are updated (AIP-134)
-  google.protobuf.FieldMask update_mask = 2;
+  //
+  // state, owner_arn, create_time and update_time are never updated here, including with a mask of * or no mask.
+  google.protobuf.FieldMask update_mask = 2 [(buf.validate.field).cel = {
+    id: "update_bank_account.update_mask"
+    message: "state, owner_arn, create_time and update_time can't be updated"
+    expression: "!this.paths.exists(p, p in ['state', 'owner_arn', 'create_time', 'update_time'])"
+  }];
 }
 
 // Response message for BankService.UpdateBankAccount.
@@ -87,7 +98,7 @@ message UpdateBankAccountResponse {
 // message for marking a bank account as inactive
 message MarkBankAccountAsInactiveRequest {
   // Id of the bank account.
-  string bank_account_id = 1 [(buf.validate.field).required = true];
+  string id = 1 [(buf.validate.field).required = true];
 }
 
 // Response message for BankService.MarkBankAccountAsInactive.
@@ -99,7 +110,7 @@ message MarkBankAccountAsInactiveResponse {
 // Request message for BankService.MarkBankAccountAsActive.
 message MarkBankAccountAsActiveRequest {
   // Id of the bank account.
-  string bank_account_id = 1 [(buf.validate.field).required = true];
+  string id = 1 [(buf.validate.field).required = true];
 }
 
 // Response message for BankService.MarkBankAccountAsActive.
