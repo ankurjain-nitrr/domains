@@ -3,18 +3,9 @@ syntax = "proto3";
 package brand.v1;
 
 import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
 import "media/v1/media.proto";
 import "validation/v1/rules.proto";
-
-// Kind of owner of a brand.
-enum BrandOwnerType {
-  // Unspecified. Not a valid value.
-  BRAND_OWNER_TYPE_UNSPECIFIED = 0;
-  // Owned by an individual user.
-  BRAND_OWNER_TYPE_INDIVIDUAL = 1;
-  // Owned by a business entity.
-  BRAND_OWNER_TYPE_COMPANY = 2;
-}
 
 // A brand, owned by an individual or a company.
 message Brand {
@@ -33,10 +24,6 @@ message Brand {
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.http_url) = true
   ];
-  // Id of the owning user (iam) or business entity, per owner_type.
-  string owner_id = 7;
-  // Whether owner_id is a user or a business entity.
-  BrandOwnerType owner_type = 8 [(buf.validate.field).enum.defined_only = true];
   // Trademark class under the Nice classification, 1 to 45.
   int32 trademark_class = 9 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
@@ -47,4 +34,23 @@ message Brand {
   ];
   // Whether the brand is active.
   bool is_active = 10;
+  // Owner of the brand: a user or a business entity, e.g. shop:User:u_1 or shop:BusinessEntity:b_1.
+  // Set at creation.
+  string owner_arn = 11 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true,
+    (buf.validate.field).cel = {
+      id: "brand.owner_arn_type"
+      message: "owner_arn must be a User or a BusinessEntity"
+      expression: "this.matches('^[^:]+:(User|BusinessEntity):[^:]+$')"
+    }
+  ];
+  // Time the brand was created. Output only.
+  google.protobuf.Timestamp create_time = 12;
+  // Time the brand was last updated. Output only.
+  google.protobuf.Timestamp update_time = 13;
+
+  // replaced by owner_arn
+  reserved 7, 8;
+  reserved "owner_id", "owner_type";
 }
