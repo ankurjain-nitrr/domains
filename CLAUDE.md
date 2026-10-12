@@ -10,6 +10,9 @@ Built with `buf` (see `Makefile`, `buf.yaml`); generated code goes to `gen/` and
   delete RPCs return the deleted resource, multi-field update RPCs take an `update_mask`, and field rules are
   protovalidate annotations, using the shared rules in `validation/v1/rules.proto`.
 - For anything not covered there, follow the Google API Improvement Proposals: https://google.aip.dev/
+- api-linter expects: a resource's lifecycle enum nested in it as `State` (AIP-216); no `Create*` name on an RPC
+  that doesn't take the resource (use a verb like `Generate`); "relative to" in `*_offset` Duration comments;
+  file-level comments above `syntax`.
 
 ## Interoperability
 
@@ -32,6 +35,9 @@ All domains must interoperate through entities and ARNs, not through knowledge o
 - Every message, field, enum, value, oneof, service and RPC needs a leading `//` comment (not trailing).
 - `.api-linter.yaml` lists the AIP rules this repo deliberately doesn't follow, with reasons. For a one-off
   exception, disable the rule inline on the element with an `aip.dev/not-precedent` reason.
+- `make check` generates with remote BSR plugins and can fail with `resource_exhausted`; retry after ~60s.
+- To test protovalidate rules, use a scratch Go module requiring `buf.build/go/protovalidate` with
+  `replace github.com/ankurjain-nitrr/domains/gen/proto/go => <repo>/gen/proto/go`, after `make generate`.
 - Plugin versions are pinned in `buf.gen.yaml`; keep `build/go/go.mod` and `build/java/pom.xml` runtimes in step.
 
 ## Skills

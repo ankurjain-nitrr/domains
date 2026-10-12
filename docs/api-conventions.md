@@ -81,6 +81,8 @@ message UpdateBrandRequest {
 - `update_mask` of `*` replaces the whole resource, clearing fields that are not set.
 - Fields owned by a dedicated RPC (e.g. `User.roles` via `AssignRole`, bank account state via
   `MarkBankAccountAs*`) are not updatable through the mask; document this on the request.
+- Enforce that with a CEL rule on `update_mask`, e.g. `!this.paths.exists(p, p in ['state', 'publish_time'])`, and
+  keep `*` allowed; the server never writes those fields from Update, with or without a mask.
 - Skip the mask when it adds nothing: resources with a single editable field (e.g. `Comment.content`),
   and resources that should not be updated at all (e.g. posted ledger entries).
 
