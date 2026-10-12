@@ -43,6 +43,10 @@ enum Action {
   ACTION_CONTENT_UPDATE = 15;
   // Delete content.
   ACTION_CONTENT_DELETE = 16;
+  // Publish content.
+  ACTION_CONTENT_PUBLISH = 24;
+  // Archive content.
+  ACTION_CONTENT_ARCHIVE = 25;
 
   // Read users.
   ACTION_USER_READ = 17;

@@ -2,11 +2,24 @@ syntax = "proto3";
 
 package content_management.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "media/v1/media.proto";
 
 // Content represents a piece of content with title, text, images, videos, and metadata
 message Content {
+  // Publishing state of content.
+  enum State {
+    // Unspecified. Not a valid value.
+    STATE_UNSPECIFIED = 0;
+    // Visible only to its creator. New content starts here.
+    STATE_DRAFT = 1;
+    // Visible to others, e.g. in feeds.
+    STATE_PUBLISHED = 2;
+    // Hidden from others, still visible to its creator. Can be published again.
+    STATE_ARCHIVED = 3;
+  }
+
   // Unique identifier of the content.
   string id = 1;
   // Title of the content.
@@ -25,4 +38,8 @@ message Content {
   string updater = 8;
   // Time the content was last updated.
   google.protobuf.Timestamp update_time = 9;
+  // Publishing state. Set by CreateContent, PublishContent and ArchiveContent.
+  State state = 10 [(buf.validate.field).enum.defined_only = true];
+  // Time the content was first published. Kept when archived content is published again.
+  google.protobuf.Timestamp publish_time = 11;
 }
