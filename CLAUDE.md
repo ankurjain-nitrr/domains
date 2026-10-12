@@ -14,3 +14,7 @@ Built with `buf` (see `Makefile`, `buf.yaml`); generated code goes to `gen/` and
 ## Checks
 
 - `buf format -w`, `buf lint` and `buf build` must be clean before committing; CI (`.github/workflows/buf.yml`) checks all three on pushes to main and on pull requests.
+
+## Skills
+
+- Skills come from https://github.com/ankurjain-nitrr/skills (enabled in `.claude/settings.json`). Run `/reflect:reflect` at the end of a session to save its learnings here.

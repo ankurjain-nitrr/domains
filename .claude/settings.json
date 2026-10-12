@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "ankurjain-skills": {
+      "source": {
+        "source": "github",
+        "repo": "ankurjain-nitrr/skills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "reflect@ankurjain-skills": true
+  }
+}
