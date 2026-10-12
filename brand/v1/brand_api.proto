@@ -48,7 +48,13 @@ message UpdateBrandRequest {
   // The brand to update. Its id identifies the brand.
   brand.v1.Brand brand = 1 [(buf.validate.field).required = true];
   // fields to update; if omitted, all fields set in brand are updated (AIP-134)
-  google.protobuf.FieldMask update_mask = 2;
+  //
+  // owner_arn, create_time and update_time are never updated, including with a mask of * or no mask.
+  google.protobuf.FieldMask update_mask = 2 [(buf.validate.field).cel = {
+    id: "update_brand.update_mask"
+    message: "owner_arn, create_time and update_time can't be updated"
+    expression: "!this.paths.exists(p, p in ['owner_arn', 'create_time', 'update_time'])"
+  }];
 }
 
 // Response message for BrandService.UpdateBrand.
@@ -71,7 +77,7 @@ message DeleteBrandResponse {
 
 // Request message for BrandService.ListBrands.
 message ListBrandsRequest {
-  // Only brands owned by this user or business entity.
+  // Only brands owned by this user or business entity. Empty lists all brands.
   string owner_arn = 1 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.entity_arn) = true

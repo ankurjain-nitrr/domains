@@ -80,8 +80,8 @@ message DeleteBusinessEntityResponse {
 
 // Request message for BusinessEntityService.ListBusinessEntities.
 message ListBusinessEntitiesRequest {
-  // Only entities this user is a director of, references iam.
-  string director_user_id = 1;
+  // Entities this user is a director of, references iam.
+  string director_user_id = 1 [(buf.validate.field).required = true];
   // Only entities of this type.
   business_entity.v1.BusinessType entity_type = 2 [(buf.validate.field).enum.defined_only = true];
   // Maximum number of results to return. The server applies a default and a maximum.

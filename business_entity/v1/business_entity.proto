@@ -54,9 +54,9 @@ message BusinessEntity {
   ];
   // Whether the business entity is active.
   bool is_active = 12;
-  // Time the business entity was created.
+  // Time the business entity was created. Output only.
   google.protobuf.Timestamp create_time = 13;
-  // Time the business entity was last updated.
+  // Time the business entity was last updated. Output only.
   google.protobuf.Timestamp update_time = 14;
 }
 
