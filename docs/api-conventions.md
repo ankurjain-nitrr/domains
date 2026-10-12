@@ -19,6 +19,7 @@ message Comment {
 - Applies to resource fields (`create_time`, `update_time`, `entry_time`, ...), request/response fields
   (e.g. token expiry), and shared types such as `commons.v1.TimeRange`.
 - Timestamps are always UTC; never carry a time zone offset in a separate field.
+- A calendar day with no time of day (an accounting date, a due date) is a `google.type.Date`.
 - Name timestamp fields `<imperative verb>_time`: `create_time`, `update_time`, `delete_time`,
   `expire_time`, `moderate_time`. Do not use `created_at` / `updated_at` style names.
 - Ranges over a timestamp field are named after it: `create_time_range` (type `commons.v1.TimeRange`).

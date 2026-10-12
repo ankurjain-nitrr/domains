@@ -4,6 +4,8 @@ package accounting.ledger.v1;
 
 import "accounting/ledger/v1/general_ledger.proto";
 import "buf/validate/validate.proto";
+import "google/protobuf/field_mask.proto";
+import "google/type/date.proto";
 
 // Request message for GeneralLedgerService.CreateGeneralLedger.
 message CreateGeneralLedgerRequest {
@@ -19,6 +21,16 @@ message CreateGeneralLedgerRequest {
       id: "general_ledger.account_id"
       message: "account_id is required"
       expression: "this.account_id != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "general_ledger.name"
+      message: "name is required"
+      expression: "this.name != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "general_ledger.group_id"
+      message: "group_id is required"
+      expression: "this.group_id != ''"
     }
   ];
 }
@@ -45,6 +57,14 @@ message GetGeneralLedgerResponse {
 message UpdateGeneralLedgerRequest {
   // The general ledger to update. Its id identifies the general ledger.
   accounting.ledger.v1.GeneralLedger general_ledger = 2 [(buf.validate.field).required = true];
+  // fields to update; if omitted, all fields set in general_ledger are updated (AIP-134)
+  //
+  // account_id, closing_balance and the timestamps are never updated here, including with a mask of * or no mask.
+  google.protobuf.FieldMask update_mask = 3 [(buf.validate.field).cel = {
+    id: "update_general_ledger.update_mask"
+    message: "account_id, closing_balance, create_time and update_time can't be updated"
+    expression: "!this.paths.exists(p, p in ['account_id', 'closing_balance', 'create_time', 'update_time'])"
+  }];
 
   // the id is taken from general_ledger.id
   reserved 1;
@@ -59,7 +79,7 @@ message UpdateGeneralLedgerResponse {
 
 // Request message for GeneralLedgerService.DeleteGeneralLedger.
 message DeleteGeneralLedgerRequest {
-  // Id of the general ledger to delete.
+  // Id of the general ledger to delete. Fails with FAILED_PRECONDITION if a voucher uses it.
   string id = 1 [(buf.validate.field).required = true];
 }
 
@@ -69,88 +89,228 @@ message DeleteGeneralLedgerResponse {
   accounting.ledger.v1.GeneralLedger general_ledger = 1;
 }
 
-// Create general ledger entry
-message CreateGeneralLedgerEntryRequest {
-  // The general ledger entry to create.
-  accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1 [
+// Request message for GeneralLedgerService.ListGeneralLedgers.
+message ListGeneralLedgersRequest {
+  // Id of the account (books) whose ledgers to list.
+  string account_id = 1 [(buf.validate.field).required = true];
+  // Only ledgers directly under this group.
+  string group_id = 2;
+  // Maximum number of results to return. The server applies a default and a maximum.
+  int64 page_size = 3 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
+  string page_token = 4;
+}
+
+// Response message for GeneralLedgerService.ListGeneralLedgers.
+message ListGeneralLedgersResponse {
+  // The general ledgers on this page.
+  repeated accounting.ledger.v1.GeneralLedger general_ledgers = 1;
+  // Token for the next page. Empty when there are no more results.
+  string next_page_token = 2;
+}
+
+// Request message for GeneralLedgerService.CreateGroup.
+message CreateGroupRequest {
+  // The group to create. It goes under parent_id and takes its nature and affects_gross_profit.
+  accounting.ledger.v1.Group group = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
-      id: "general_ledger_entry.ledger_id"
-      message: "ledger_id is required"
-      expression: "this.ledger_id != ''"
-    },
-    (buf.validate.field).cel = {
-      id: "general_ledger_entry.account_id"
+      id: "group.account_id"
       message: "account_id is required"
       expression: "this.account_id != ''"
     },
     (buf.validate.field).cel = {
-      id: "general_ledger_entry.amount"
-      message: "amount is required"
-      expression: "has(this.amount)"
+      id: "group.name"
+      message: "name is required"
+      expression: "this.name != ''"
     },
     (buf.validate.field).cel = {
-      id: "general_ledger_entry.entry_type"
-      message: "entry_type is required"
-      expression: "this.entry_type != 0"
-    },
-    (buf.validate.field).cel = {
-      id: "general_ledger_entry.general_ledger_type"
-      message: "general_ledger_type is required"
-      expression: "this.general_ledger_type != 0"
+      id: "group.parent_id"
+      message: "parent_id is required"
+      expression: "this.parent_id != ''"
     }
   ];
 }
 
-// Response message for GeneralLedgerService.CreateGeneralLedgerEntry.
-message CreateGeneralLedgerEntryResponse {
-  // The created general ledger entry.
-  accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
+// Response message for GeneralLedgerService.CreateGroup.
+message CreateGroupResponse {
+  // The created group.
+  accounting.ledger.v1.Group group = 1;
 }
 
-// Request message for GeneralLedgerService.GetGeneralLedgerEntry.
-message GetGeneralLedgerEntryRequest {
-  // Id of the general ledger entry to get.
+// Request message for GeneralLedgerService.GetGroup.
+message GetGroupRequest {
+  // Id of the group to get.
   string id = 1 [(buf.validate.field).required = true];
 }
 
-// Response message for GeneralLedgerService.GetGeneralLedgerEntry.
-message GetGeneralLedgerEntryResponse {
-  // The requested general ledger entry.
-  accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
+// Response message for GeneralLedgerService.GetGroup.
+message GetGroupResponse {
+  // The requested group.
+  accounting.ledger.v1.Group group = 1;
 }
 
-// Request message for GeneralLedgerService.UpdateGeneralLedgerEntry.
-message UpdateGeneralLedgerEntryRequest {
-  // The general ledger entry to update. Its id identifies the general ledger entry.
-  accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 2 [(buf.validate.field).required = true];
+// Request message for GeneralLedgerService.UpdateGroup.
+message UpdateGroupRequest {
+  // The group to update. Its id identifies the group. Predefined groups can't be updated.
+  accounting.ledger.v1.Group group = 1 [(buf.validate.field).required = true];
+  // fields to update; if omitted, all fields set in group are updated (AIP-134)
+  //
+  // Only name and parent_id are updated; nature and affects_gross_profit follow the parent.
+  google.protobuf.FieldMask update_mask = 2 [(buf.validate.field).cel = {
+    id: "update_group.update_mask"
+    message: "only name and parent_id can be updated"
+    expression: "this.paths.all(p, p in ['name', 'parent_id'])"
+  }];
 }
 
-// Response message for GeneralLedgerService.UpdateGeneralLedgerEntry.
-message UpdateGeneralLedgerEntryResponse {
-  // The updated general ledger entry.
-  accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
+// Response message for GeneralLedgerService.UpdateGroup.
+message UpdateGroupResponse {
+  // The updated group.
+  accounting.ledger.v1.Group group = 1;
 }
 
-// Request message for GeneralLedgerService.ListGeneralLedgerEntries.
-message ListGeneralLedgerEntriesRequest {
-  // Id of the ledger whose entries to list.
-  string general_ledger_id = 1 [(buf.validate.field).required = true];
+// Request message for GeneralLedgerService.DeleteGroup.
+message DeleteGroupRequest {
+  // Id of the group to delete. Fails with FAILED_PRECONDITION if it is predefined or has ledgers or sub-groups.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for GeneralLedgerService.DeleteGroup.
+message DeleteGroupResponse {
+  // The deleted group.
+  accounting.ledger.v1.Group group = 1;
+}
+
+// Request message for GeneralLedgerService.ListGroups.
+message ListGroupsRequest {
+  // Id of the account (books) whose groups to list.
+  string account_id = 1 [(buf.validate.field).required = true];
   // Maximum number of results to return. The server applies a default and a maximum.
   int64 page_size = 2 [(buf.validate.field).int64.gte = 0];
   // Page token from a previous response's next_page_token. Empty for the first page.
   string page_token = 3;
 }
 
-// Response message for GeneralLedgerService.ListGeneralLedgerEntries.
-message ListGeneralLedgerEntriesResponse {
-  // The general ledger entries on this page.
-  repeated accounting.ledger.v1.GeneralLedgerEntry general_ledger_entries = 1;
+// Response message for GeneralLedgerService.ListGroups.
+message ListGroupsResponse {
+  // The groups on this page, parents before children.
+  repeated accounting.ledger.v1.Group groups = 1;
   // Token for the next page. Empty when there are no more results.
   string next_page_token = 2;
 }
 
-// Manages general ledgers and their entries.
+// Fails with INVALID_ARGUMENT if debits don't equal credits, if the entries don't fit the voucher type (e.g. a
+// contra between non cash or bank ledgers) or if bill allocations don't add up; FAILED_PRECONDITION if the date is
+// before books_begin_date or on or before books_locked_until.
+message CreateVoucherRequest {
+  // The voucher to create. Its number and state are set by the server.
+  accounting.ledger.v1.Voucher voucher = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "voucher.account_id"
+      message: "account_id is required"
+      expression: "this.account_id != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "voucher.type"
+      message: "type is required"
+      expression: "this.type != 0"
+    },
+    (buf.validate.field).cel = {
+      id: "voucher.date"
+      message: "date is required"
+      expression: "has(this.date)"
+    },
+    (buf.validate.field).cel = {
+      id: "voucher.entries"
+      message: "a voucher needs at least one debit and one credit, each with a ledger and an amount"
+      expression:
+        "this.entries.all(e, e.ledger_id != '' && e.entry_type != 0 && has(e.amount))"
+        " && this.entries.exists(e, e.entry_type == 1) && this.entries.exists(e, e.entry_type == 2)"
+    }
+  ];
+}
+
+// Response message for GeneralLedgerService.CreateVoucher.
+message CreateVoucherResponse {
+  // The created voucher, in STATE_ACTIVE.
+  accounting.ledger.v1.Voucher voucher = 1;
+}
+
+// Request message for GeneralLedgerService.GetVoucher.
+message GetVoucherRequest {
+  // Id of the voucher to get.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for GeneralLedgerService.GetVoucher.
+message GetVoucherResponse {
+  // The requested voucher.
+  accounting.ledger.v1.Voucher voucher = 1;
+}
+
+// Same rules as CreateVoucher; cancelled vouchers can't be updated.
+message UpdateVoucherRequest {
+  // The voucher to update. Its id identifies the voucher.
+  accounting.ledger.v1.Voucher voucher = 1 [(buf.validate.field).required = true];
+  // fields to update; if omitted, all fields set in voucher are updated (AIP-134)
+  //
+  // Only date, narration, reference and entries are updated.
+  google.protobuf.FieldMask update_mask = 2 [(buf.validate.field).cel = {
+    id: "update_voucher.update_mask"
+    message: "only date, narration, reference and entries can be updated"
+    expression: "this.paths.all(p, p in ['date', 'narration', 'reference', 'entries'])"
+  }];
+}
+
+// Response message for GeneralLedgerService.UpdateVoucher.
+message UpdateVoucherResponse {
+  // The updated voucher.
+  accounting.ledger.v1.Voucher voucher = 1;
+}
+
+// Request message for GeneralLedgerService.CancelVoucher.
+message CancelVoucherRequest {
+  // Id of the voucher to cancel.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for GeneralLedgerService.CancelVoucher.
+message CancelVoucherResponse {
+  // The cancelled voucher.
+  accounting.ledger.v1.Voucher voucher = 1;
+}
+
+// Request message for GeneralLedgerService.ListVouchers. Lists by date, like Tally's Day Book.
+message ListVouchersRequest {
+  // Id of the account (books) whose vouchers to list.
+  string account_id = 1 [(buf.validate.field).required = true];
+  // Only vouchers of this type.
+  accounting.ledger.v1.VoucherType type = 2 [(buf.validate.field).enum.defined_only = true];
+  // Only vouchers with an entry for this ledger.
+  string ledger_id = 3;
+  // Only vouchers dated on or after this day.
+  google.type.Date start_date = 4;
+  // Only vouchers dated on or before this day.
+  google.type.Date end_date = 5;
+  // Only vouchers in this state.
+  accounting.ledger.v1.Voucher.State state = 6 [(buf.validate.field).enum.defined_only = true];
+  // Maximum number of results to return. The server applies a default and a maximum.
+  int64 page_size = 7 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
+  string page_token = 8;
+}
+
+// Response message for GeneralLedgerService.ListVouchers.
+message ListVouchersResponse {
+  // The vouchers on this page, by date then number.
+  repeated accounting.ledger.v1.Voucher vouchers = 1;
+  // Token for the next page. Empty when there are no more results.
+  string next_page_token = 2;
+}
+
+// Manages an account's chart of accounts (groups and ledgers) and its vouchers.
 service GeneralLedgerService {
   // Creates a general ledger.
   rpc CreateGeneralLedger(CreateGeneralLedgerRequest) returns (CreateGeneralLedgerResponse) {}
@@ -160,12 +320,27 @@ service GeneralLedgerService {
   rpc UpdateGeneralLedger(UpdateGeneralLedgerRequest) returns (UpdateGeneralLedgerResponse) {}
   // Deletes a general ledger and returns it.
   rpc DeleteGeneralLedger(DeleteGeneralLedgerRequest) returns (DeleteGeneralLedgerResponse) {}
-  // Creates a general ledger entry.
-  rpc CreateGeneralLedgerEntry(CreateGeneralLedgerEntryRequest) returns (CreateGeneralLedgerEntryResponse) {}
-  // Gets a general ledger entry by id.
-  rpc GetGeneralLedgerEntry(GetGeneralLedgerEntryRequest) returns (GetGeneralLedgerEntryResponse) {}
-  // Updates a general ledger entry.
-  rpc UpdateGeneralLedgerEntry(UpdateGeneralLedgerEntryRequest) returns (UpdateGeneralLedgerEntryResponse) {}
-  // Lists general ledger entries, a page at a time.
-  rpc ListGeneralLedgerEntries(ListGeneralLedgerEntriesRequest) returns (ListGeneralLedgerEntriesResponse) {}
+  // Lists general ledgers, a page at a time.
+  rpc ListGeneralLedgers(ListGeneralLedgersRequest) returns (ListGeneralLedgersResponse) {}
+  // Creates a custom group.
+  rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {}
+  // Gets a group by id.
+  rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {}
+  // Updates a custom group.
+  rpc UpdateGroup(UpdateGroupRequest) returns (UpdateGroupResponse) {}
+  // Deletes a custom group and returns it.
+  rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {}
+  // Lists groups, a page at a time.
+  rpc ListGroups(ListGroupsRequest) returns (ListGroupsResponse) {}
+  // Creates a voucher.
+  rpc CreateVoucher(CreateVoucherRequest) returns (CreateVoucherResponse) {}
+  // Gets a voucher by id.
+  rpc GetVoucher(GetVoucherRequest) returns (GetVoucherResponse) {}
+  // Updates a voucher.
+  rpc UpdateVoucher(UpdateVoucherRequest) returns (UpdateVoucherResponse) {}
+  // Cancels a voucher: it keeps its number and stops counting toward balances. Fails with FAILED_PRECONDITION if
+  // its date is on or before books_locked_until.
+  rpc CancelVoucher(CancelVoucherRequest) returns (CancelVoucherResponse) {}
+  // Lists vouchers, a page at a time.
+  rpc ListVouchers(ListVouchersRequest) returns (ListVouchersResponse) {}
 }

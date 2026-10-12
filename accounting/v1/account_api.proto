@@ -4,6 +4,8 @@ package accounting.v1;
 
 import "accounting/v1/account.proto";
 import "buf/validate/validate.proto";
+import "google/protobuf/field_mask.proto";
+import "validation/v1/rules.proto";
 
 // Request message for AccountService.CreateAccount.
 message CreateAccountRequest {
@@ -14,6 +16,16 @@ message CreateAccountRequest {
       id: "account.owner_arn"
       message: "owner_arn is required"
       expression: "this.owner_arn != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "account.name"
+      message: "name is required"
+      expression: "this.name != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "account.currency_code"
+      message: "currency_code is required"
+      expression: "this.currency_code != ''"
     }
   ];
 }
@@ -40,6 +52,14 @@ message GetAccountResponse {
 message UpdateAccountRequest {
   // The account to update. Its id identifies the account.
   accounting.v1.Account account = 2 [(buf.validate.field).required = true];
+  // fields to update; if omitted, all fields set in account are updated (AIP-134)
+  //
+  // owner_arn, currency_code and the timestamps are never updated here, including with a mask of * or no mask.
+  google.protobuf.FieldMask update_mask = 3 [(buf.validate.field).cel = {
+    id: "update_account.update_mask"
+    message: "owner_arn, currency_code, create_time and update_time can't be updated"
+    expression: "!this.paths.exists(p, p in ['owner_arn', 'currency_code', 'create_time', 'update_time'])"
+  }];
 }
 
 // Response message for AccountService.UpdateAccount.
@@ -60,7 +80,29 @@ message DeleteAccountResponse {
   accounting.v1.Account account = 1;
 }
 
-// Manages accounts, the owner of ledgers in the accounting domain.
+// Request message for AccountService.ListAccounts.
+message ListAccountsRequest {
+  // Owner of the books to list, a user or business entity arn.
+  string owner_arn = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true,
+    (buf.validate.field).string.(validation.v1.owner_arn) = true
+  ];
+  // Maximum number of results to return. The server applies a default and a maximum.
+  int64 page_size = 2 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
+  string page_token = 3;
+}
+
+// Response message for AccountService.ListAccounts.
+message ListAccountsResponse {
+  // The accounts on this page.
+  repeated accounting.v1.Account accounts = 1;
+  // Token for the next page. Empty when there are no more results.
+  string next_page_token = 2;
+}
+
+// Manages accounts: sets of books (Tally's companies) that hold groups, ledgers and vouchers.
 service AccountService {
   // Creates an account.
   rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}
@@ -70,4 +112,6 @@ service AccountService {
   rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse) {}
   // Deletes an account and returns it.
   rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {}
+  // Lists an owner's accounts, a page at a time.
+  rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse) {}
 }

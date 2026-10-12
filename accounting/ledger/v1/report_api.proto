@@ -1,0 +1,191 @@
+syntax = "proto3";
+
+package accounting.ledger.v1;
+
+import "accounting/ledger/v1/general_ledger.proto";
+import "buf/validate/validate.proto";
+import "google/type/date.proto";
+import "google/type/money.proto";
+
+// Closing balance of one ledger, a row of the trial balance.
+message LedgerBalance {
+  // Id of the ledger.
+  string ledger_id = 1;
+  // Id of the group the ledger is under.
+  string group_id = 2;
+  // Balance of the ledger.
+  Balance balance = 3;
+}
+
+// Total of one group and everything under it, a row of the profit and loss account or balance sheet.
+message GroupBalance {
+  // Id of the group.
+  string group_id = 1;
+  // Id of the parent group. Empty for a primary group.
+  string parent_id = 2;
+  // Total of the group's ledgers and sub-groups.
+  Balance balance = 3;
+}
+
+// Request message for ReportService.GetTrialBalance.
+message GetTrialBalanceRequest {
+  // Id of the account (books).
+  string account_id = 1 [(buf.validate.field).required = true];
+  // Balances as of the end of this day. Unset means today.
+  google.type.Date date = 2;
+}
+
+// Response message for ReportService.GetTrialBalance.
+message GetTrialBalanceResponse {
+  // Closing balance of every ledger with a balance, by group.
+  repeated LedgerBalance ledger_balances = 1;
+  // Total of debit balances.
+  google.type.Money total_debit = 2;
+  // Total of credit balances. Equals total_debit.
+  google.type.Money total_credit = 3;
+}
+
+// Request message for ReportService.GetProfitAndLoss.
+message GetProfitAndLossRequest {
+  // Id of the account (books).
+  string account_id = 1 [(buf.validate.field).required = true];
+  // First day of the period. Unset means the start of the current financial year.
+  google.type.Date start_date = 2;
+  // Last day of the period. Unset means today.
+  google.type.Date end_date = 3;
+}
+
+// Response message for ReportService.GetProfitAndLoss.
+message GetProfitAndLossResponse {
+  // Totals of income and expense groups for the period.
+  repeated GroupBalance group_balances = 1;
+  // Gross profit: sales and direct incomes less purchases and direct expenses. Negative for a gross loss.
+  google.type.Money gross_profit = 2;
+  // Net profit: gross profit plus indirect incomes less indirect expenses. Negative for a net loss.
+  google.type.Money net_profit = 3;
+}
+
+// Request message for ReportService.GetBalanceSheet.
+message GetBalanceSheetRequest {
+  // Id of the account (books).
+  string account_id = 1 [(buf.validate.field).required = true];
+  // Balances as of the end of this day. Unset means today.
+  google.type.Date date = 2;
+}
+
+// Response message for ReportService.GetBalanceSheet.
+message GetBalanceSheetResponse {
+  // Totals of asset and liability groups.
+  repeated GroupBalance group_balances = 1;
+  // Profit since the books began, shown with liabilities. Negative for a loss.
+  google.type.Money profit_and_loss = 2;
+  // Total assets.
+  google.type.Money total_assets = 3;
+  // Total liabilities, including profit_and_loss. Equals total_assets.
+  google.type.Money total_liabilities = 4;
+}
+
+// One entry in a ledger statement.
+message LedgerStatementLine {
+  // Id of the voucher.
+  string voucher_id = 1;
+  // Type of the voucher.
+  VoucherType voucher_type = 2;
+  // Number of the voucher.
+  string voucher_number = 3;
+  // Date of the voucher.
+  google.type.Date date = 4;
+  // Narration of the voucher.
+  string narration = 5;
+  // Debit or credit to this ledger.
+  EntryType entry_type = 6;
+  // Amount of the entry.
+  google.type.Money amount = 7;
+  // Balance of the ledger after this entry.
+  Balance running_balance = 8;
+}
+
+// Request message for ReportService.GetLedgerStatement.
+message GetLedgerStatementRequest {
+  // Id of the ledger.
+  string ledger_id = 1 [(buf.validate.field).required = true];
+  // First day of the period. Unset means the start of the current financial year.
+  google.type.Date start_date = 2;
+  // Last day of the period. Unset means today.
+  google.type.Date end_date = 3;
+  // Maximum number of lines to return. The server applies a default and a maximum.
+  int64 page_size = 4 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
+  string page_token = 5;
+}
+
+// Response message for ReportService.GetLedgerStatement.
+message GetLedgerStatementResponse {
+  // Entries in the period on this page, by date then voucher number.
+  repeated LedgerStatementLine lines = 1;
+  // Balance before the period.
+  Balance opening_balance = 2;
+  // Balance at the end of the period.
+  Balance closing_balance = 3;
+  // Token for the next page. Empty when there are no more results.
+  string next_page_token = 4;
+}
+
+// A bill with an amount still to be received or paid.
+message OutstandingBill {
+  // Id of the bill-wise ledger, e.g. the customer.
+  string ledger_id = 1;
+  // Bill name, e.g. the invoice number.
+  string name = 2;
+  // Date of the voucher that created the bill.
+  google.type.Date bill_date = 3;
+  // Due date of the bill.
+  google.type.Date due_date = 4;
+  // Original amount of the bill.
+  google.type.Money bill_amount = 5;
+  // Amount not yet settled.
+  google.type.Money pending_amount = 6;
+  // Days past the due date as of the report date. 0 if not yet due.
+  int32 overdue_days = 7;
+}
+
+// Request message for ReportService.ListOutstandingBills.
+message ListOutstandingBillsRequest {
+  // Id of the account (books).
+  string account_id = 1 [(buf.validate.field).required = true];
+  // DEBIT for receivables (owed to the books), CREDIT for payables.
+  EntryType side = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  // Only bills of this ledger, e.g. one customer.
+  string ledger_id = 3;
+  // Outstanding as of the end of this day. Unset means today.
+  google.type.Date date = 4;
+  // Maximum number of results to return. The server applies a default and a maximum.
+  int64 page_size = 5 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
+  string page_token = 6;
+}
+
+// Response message for ReportService.ListOutstandingBills.
+message ListOutstandingBillsResponse {
+  // Bills with a pending amount on this page, oldest due date first.
+  repeated OutstandingBill outstanding_bills = 1;
+  // Token for the next page. Empty when there are no more results.
+  string next_page_token = 2;
+}
+
+// Financial reports over an account's active vouchers, as in Tally.
+service ReportService {
+  // Gets the trial balance: every ledger's closing balance.
+  rpc GetTrialBalance(GetTrialBalanceRequest) returns (GetTrialBalanceResponse) {}
+  // Gets the profit and loss account for a period.
+  rpc GetProfitAndLoss(GetProfitAndLossRequest) returns (GetProfitAndLossResponse) {}
+  // Gets the balance sheet as of a day.
+  rpc GetBalanceSheet(GetBalanceSheetRequest) returns (GetBalanceSheetResponse) {}
+  // Gets a ledger's entries for a period with opening, running and closing balances.
+  rpc GetLedgerStatement(GetLedgerStatementRequest) returns (GetLedgerStatementResponse) {}
+  // Lists bills still to be received or paid, with ageing.
+  rpc ListOutstandingBills(ListOutstandingBillsRequest) returns (ListOutstandingBillsResponse) {}
+}
