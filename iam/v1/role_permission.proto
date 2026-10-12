@@ -9,8 +9,11 @@ import "iam/v1/actions.proto";
 
 // permissions that allows roles to perform actions on a specific resource
 message Permission {
+  // Unique identifier of the permission.
   string id = 1;
+  // Name of the permission.
   string name = 2;
+  // Description of the permission.
   string description = 3;
   // tenent:user_id:entity_type:entity_id
   // ex: social_network:user_id_123:Content:content_id_123 # specific content
@@ -22,15 +25,23 @@ message Permission {
   ];
   // one of all actions (boolean) or specific actions (list of strings)
   oneof actions {
+    // Allow every action on the resource.
     bool all_actions = 5;
+    // Allow only these actions on the resource.
     Actions actions_list = 6;
   }
+  // Tenant the permission belongs to.
   string tenant = 7;
+  // Whether the permission is active.
   bool is_active = 8;
+  // Time the permission was created.
   google.protobuf.Timestamp create_time = 9;
+  // Time the permission was last updated.
   google.protobuf.Timestamp update_time = 10;
 
+  // A list of actions a permission allows.
   message Actions {
+    // The allowed actions.
     repeated iam.v1.Action actions = 1 [(buf.validate.field).repeated = {
       min_items: 1
       unique: true
@@ -46,22 +57,32 @@ message Permission {
 
 // roles that can be assigned to users
 message Role {
+  // Unique identifier of the role.
   string id = 1;
+  // Name of the role.
   string name = 2;
+  // Description of the role.
   string description = 3;
+  // Time the role was created.
   google.protobuf.Timestamp create_time = 4;
+  // Time the role was last updated.
   google.protobuf.Timestamp update_time = 5;
+  // References permission id from permission service.
   repeated string permissions = 6 [(buf.validate.field).repeated = {
     unique: true
     items: {
       string: {min_len: 1}
     }
-  }]; // references permission id from permission service
+  }];
+  // Tenant the role belongs to.
   string tenant = 7;
+  // Whether the role is active.
   bool is_active = 8;
 }
 
+// Request message for RolePermissionService.CreatePermission.
 message CreatePermissionRequest {
+  // The permission to create.
   Permission permission = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -87,37 +108,53 @@ message CreatePermissionRequest {
   ];
 }
 
+// Response message for RolePermissionService.CreatePermission.
 message CreatePermissionResponse {
+  // The created permission.
   Permission permission = 1;
 }
 
+// Request message for RolePermissionService.GetPermission.
 message GetPermissionRequest {
+  // Id of the permission to get.
   string id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for RolePermissionService.GetPermission.
 message GetPermissionResponse {
+  // The requested permission.
   Permission permission = 1;
 }
 
+// Request message for RolePermissionService.UpdatePermission.
 message UpdatePermissionRequest {
+  // The permission to update. Its id identifies the permission.
   Permission permission = 1 [(buf.validate.field).required = true];
   // fields to update; if omitted, all fields set in permission are updated (AIP-134)
   google.protobuf.FieldMask update_mask = 2;
 }
 
+// Response message for RolePermissionService.UpdatePermission.
 message UpdatePermissionResponse {
+  // The updated permission.
   Permission permission = 1;
 }
 
+// Request message for RolePermissionService.DeletePermission.
 message DeletePermissionRequest {
+  // Id of the permission to delete.
   string id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for RolePermissionService.DeletePermission.
 message DeletePermissionResponse {
+  // The deleted permission.
   Permission permission = 1;
 }
 
+// Request message for RolePermissionService.CreateRole.
 message CreateRoleRequest {
+  // The role to create.
   Role role = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -133,43 +170,66 @@ message CreateRoleRequest {
   ];
 }
 
+// Response message for RolePermissionService.CreateRole.
 message CreateRoleResponse {
+  // The created role.
   Role role = 1;
 }
 
+// Request message for RolePermissionService.GetRole.
 message GetRoleRequest {
+  // Id of the role to get.
   string id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for RolePermissionService.GetRole.
 message GetRoleResponse {
+  // The requested role.
   Role role = 1;
 }
 
+// Request message for RolePermissionService.UpdateRole.
 message UpdateRoleRequest {
+  // The role to update. Its id identifies the role.
   Role role = 1 [(buf.validate.field).required = true];
   // fields to update; if omitted, all fields set in role are updated (AIP-134)
   google.protobuf.FieldMask update_mask = 2;
 }
 
+// Response message for RolePermissionService.UpdateRole.
 message UpdateRoleResponse {
+  // The updated role.
   Role role = 1;
 }
 
+// Request message for RolePermissionService.DeleteRole.
 message DeleteRoleRequest {
+  // Id of the role to delete.
   string id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for RolePermissionService.DeleteRole.
 message DeleteRoleResponse {
+  // The deleted role.
   Role role = 1;
 }
 
+// Manages permissions and the roles that group them.
 service RolePermissionService {
+  // Creates a permission.
   rpc CreatePermission(CreatePermissionRequest) returns (CreatePermissionResponse) {}
+  // Gets a permission by id.
   rpc GetPermission(GetPermissionRequest) returns (GetPermissionResponse) {}
+  // Updates a permission.
   rpc UpdatePermission(UpdatePermissionRequest) returns (UpdatePermissionResponse) {}
+  // Deletes a permission and returns it.
   rpc DeletePermission(DeletePermissionRequest) returns (DeletePermissionResponse) {} // marks the permission as inactive
+  // Creates a role.
   rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse) {}
+  // Gets a role by id.
   rpc GetRole(GetRoleRequest) returns (GetRoleResponse) {}
+  // Updates a role.
   rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse) {}
+  // Deletes a role and returns it.
   rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse) {} // marks the role as inactive
 }

@@ -6,6 +6,7 @@ breaking:
 lint:
   use:
     - STANDARD
+    - COMMENTS
 deps:
   - "buf.build/googleapis/googleapis"
   - "buf.build/bufbuild/protovalidate"

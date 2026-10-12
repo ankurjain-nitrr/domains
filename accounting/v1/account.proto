@@ -4,12 +4,19 @@ package accounting.v1;
 
 import "google/protobuf/timestamp.proto";
 
+// An account in the accounting domain, owned by a user or a business entity.
 message Account {
+  // Unique identifier of the account.
   string id = 1;
+  // Owner of the account.
   oneof owner {
+    // Id of the owning user, references iam.
     string user_id = 2;
+    // Id of the owning business entity.
     string business_entity_id = 3;
   }
+  // Time the account was created.
   google.protobuf.Timestamp create_time = 6;
+  // Time the account was last updated.
   google.protobuf.Timestamp update_time = 7;
 }

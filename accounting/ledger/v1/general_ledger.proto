@@ -6,61 +6,106 @@ import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "google/type/money.proto"; // Importing Google's Money type'
 
+// A general ledger tracking the balance of one account.
 message GeneralLedger {
-  string id = 1; // id of the general ledger
-  string tenant_id = 2; // tenant id
-  string account_id = 3; // id of the account
-  google.type.Money balance = 4; // balance of the general ledger
-  google.protobuf.Timestamp create_time = 5; // time the ledger was created
-  google.protobuf.Timestamp update_time = 6; // time the ledger was last updated
+  // Id of the general ledger.
+  string id = 1;
+  // Tenant id.
+  string tenant_id = 2;
+  // Id of the account.
+  string account_id = 3;
+  // Balance of the general ledger.
+  google.type.Money balance = 4;
+  // Time the ledger was created.
+  google.protobuf.Timestamp create_time = 5;
+  // Time the ledger was last updated.
+  google.protobuf.Timestamp update_time = 6;
 }
 
+// A single debit or credit posted to a general ledger.
 message GeneralLedgerEntry {
-  string id = 1; // id of the general ledger entry
-  string ledger_id = 2; // id of the general ledger
-  string account_id = 3; // id of the account against which the transaction is made
-  GeneralLedgerType general_ledger_type = 4 [(buf.validate.field).enum.defined_only = true]; // type of the general ledger
-  EntryType entry_type = 5 [(buf.validate.field).enum.defined_only = true]; // type of the entry
+  // Id of the general ledger entry.
+  string id = 1;
+  // Id of the general ledger.
+  string ledger_id = 2;
+  // Id of the account against which the transaction is made.
+  string account_id = 3;
+  // Type of the general ledger.
+  GeneralLedgerType general_ledger_type = 4 [(buf.validate.field).enum.defined_only = true];
+  // Type of the entry.
+  EntryType entry_type = 5 [(buf.validate.field).enum.defined_only = true];
+  // Amount of the transaction.
   google.type.Money amount = 6 [(buf.validate.field).cel = {
     id: "general_ledger_entry.amount_positive"
     message: "amount must be positive"
     expression: "this.units > 0 || (this.units == 0 && this.nanos > 0)"
-  }]; // amount of the transaction
-  google.protobuf.Timestamp entry_time = 7; // time of the transaction
-  string description = 8; // description of the transaction
-  string reference_id = 9; // reference id of the transaction
+  }];
+  // Time of the transaction.
+  google.protobuf.Timestamp entry_time = 7;
+  // Description of the transaction.
+  string description = 8;
+  // Reference id of the transaction.
+  string reference_id = 9;
 }
 
+// Accounting classification of a general ledger.
 enum GeneralLedgerType {
+  // Unspecified. Not a valid value.
   GENERAL_LEDGER_TYPE_UNSPECIFIED = 0;
-  GENERAL_LEDGER_TYPE_ASSET = 1; // Cash, Debtor, Inventory, etc.
-  GENERAL_LEDGER_TYPE_LIABILITY = 2; // Creditor, Loan, etc.
-  GENERAL_LEDGER_TYPE_EQUITY = 3; // Owner's Equity, Shareholders' Equity, etc.
-  GENERAL_LEDGER_TYPE_INCOME = 4; // Sales Revenue, Interest Income, etc.
-  GENERAL_LEDGER_TYPE_EXPENSE = 5; // Rent Expense, Salaries Expense, etc.
-  GENERAL_LEDGER_TYPE_REVENUE = 6; // Sales Revenue, Interest Revenue, etc.
-  GENERAL_LEDGER_TYPE_GAIN = 7; // For non-operating gains
-  GENERAL_LEDGER_TYPE_LOSS = 8; // For non-operating losses
-  GENERAL_LEDGER_TYPE_OTHER = 9; // For other types of general ledger
+  // Cash, Debtor, Inventory, etc.
+  GENERAL_LEDGER_TYPE_ASSET = 1;
+  // Creditor, Loan, etc.
+  GENERAL_LEDGER_TYPE_LIABILITY = 2;
+  // Owner's Equity, Shareholders' Equity, etc.
+  GENERAL_LEDGER_TYPE_EQUITY = 3;
+  // Sales Revenue, Interest Income, etc.
+  GENERAL_LEDGER_TYPE_INCOME = 4;
+  // Rent Expense, Salaries Expense, etc.
+  GENERAL_LEDGER_TYPE_EXPENSE = 5;
+  // Sales Revenue, Interest Revenue, etc.
+  GENERAL_LEDGER_TYPE_REVENUE = 6;
+  // For non-operating gains.
+  GENERAL_LEDGER_TYPE_GAIN = 7;
+  // For non-operating losses.
+  GENERAL_LEDGER_TYPE_LOSS = 8;
+  // For other types of general ledger.
+  GENERAL_LEDGER_TYPE_OTHER = 9;
 }
 
+// Side of a double-entry posting.
 enum EntryType {
+  // Unspecified. Not a valid value.
   ENTRY_TYPE_UNSPECIFIED = 0;
+  // Debit entry.
   ENTRY_TYPE_DEBIT = 1;
+  // Credit entry.
   ENTRY_TYPE_CREDIT = 2;
 }
 
+// Business transaction that produced a ledger entry.
 enum TransactionType {
+  // Unspecified. Not a valid value.
   TRANSACTION_TYPE_UNSPECIFIED = 0;
-  TRANSACTION_TYPE_SALES = 1; // Sale of goods/services
-  TRANSACTION_TYPE_PURCHASE = 2; // Purchase of goods/services
-  TRANSACTION_TYPE_RECEIPT = 3; // Money received (e.g., from customers)
-  TRANSACTION_TYPE_EXPENSE = 4; // General expenses not covered by other types
-  TRANSACTION_TYPE_TAX_PAYMENT = 5; // Payment of taxes
-  TRANSACTION_TYPE_LOAN_ISSUANCE = 6; // Loan given out
-  TRANSACTION_TYPE_LOAN_REPAYMENT = 7; // Repayment of loan
-  TRANSACTION_TYPE_DIVIDEND_PAYMENT = 8; // Payment of dividends to shareholders
-  TRANSACTION_TYPE_RETURN = 9; // Return of goods (from customer or to vendor)
-  TRANSACTION_TYPE_CANCELLATION = 10; // Transaction reversal
-  TRANSACTION_TYPE_OTHER = 11; // Other types not covered explicitly
+  // Sale of goods/services.
+  TRANSACTION_TYPE_SALES = 1;
+  // Purchase of goods/services.
+  TRANSACTION_TYPE_PURCHASE = 2;
+  // Money received (e.g., from customers)
+  TRANSACTION_TYPE_RECEIPT = 3;
+  // General expenses not covered by other types.
+  TRANSACTION_TYPE_EXPENSE = 4;
+  // Payment of taxes.
+  TRANSACTION_TYPE_TAX_PAYMENT = 5;
+  // Loan given out.
+  TRANSACTION_TYPE_LOAN_ISSUANCE = 6;
+  // Repayment of loan.
+  TRANSACTION_TYPE_LOAN_REPAYMENT = 7;
+  // Payment of dividends to shareholders.
+  TRANSACTION_TYPE_DIVIDEND_PAYMENT = 8;
+  // Return of goods (from customer or to vendor)
+  TRANSACTION_TYPE_RETURN = 9;
+  // Transaction reversal.
+  TRANSACTION_TYPE_CANCELLATION = 10;
+  // Other types not covered explicitly.
+  TRANSACTION_TYPE_OTHER = 11;
 }

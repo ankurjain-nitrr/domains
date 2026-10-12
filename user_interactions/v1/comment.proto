@@ -9,54 +9,83 @@ import "validation/v1/rules.proto";
 
 // Comment represents a comment on an entity, or a reply to another comment
 message Comment {
+  // Unique identifier of the comment.
   string id = 1;
-  string user_id = 2; // references id from iam service
+  // References id from iam service.
+  string user_id = 2;
+  // Multi tenant id # tenant:entity_type:entity_id.
   string entity_arn = 3 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.entity_arn) = true
-  ]; // multi tenant id # tenant:entity_type:entity_id
-  string content = 4; // comments can be text only
+  ];
+  // Comments can be text only.
+  string content = 4;
+  // Time the comment was created.
   google.protobuf.Timestamp create_time = 5;
+  // Time the comment was last updated.
   google.protobuf.Timestamp update_time = 6;
-  string parent_comment_id = 7; // id of the comment this replies to; empty for top-level comments
-  Moderation moderation = 8; // output only, set by the service
-}
-
-// Moderation lifecycle of a comment
-//
-// A new comment starts as PENDING (pre-moderation) or APPROVED (post-moderation), per tenant policy.
-// Users can flag an APPROVED comment, moving it to FLAGGED; it stays visible until a moderator reviews it.
-// Moderators move a comment to APPROVED or REJECTED from any status.
-// Only APPROVED and FLAGGED comments are visible to users other than the author, and only they are counted.
-enum ModerationStatus {
-  MODERATION_STATUS_UNSPECIFIED = 0;
-  MODERATION_STATUS_PENDING = 1; // awaiting review, visible only to the author
-  MODERATION_STATUS_APPROVED = 2; // visible
-  MODERATION_STATUS_FLAGGED = 3; // reported by users, visible until reviewed
-  MODERATION_STATUS_REJECTED = 4; // hidden from everyone except the author and moderators
+  // Id of the comment this replies to; empty for top-level comments.
+  string parent_comment_id = 7;
+  // Output only, set by the service.
+  Moderation moderation = 8;
 }
 
 // reason a user flagged a comment
 enum FlagReason {
+  // Unspecified. Not a valid value.
   FLAG_REASON_UNSPECIFIED = 0;
+  // Spam or unsolicited promotion.
   FLAG_REASON_SPAM = 1;
+  // Harassment or bullying.
   FLAG_REASON_HARASSMENT = 2;
+  // Hate speech.
   FLAG_REASON_HATE_SPEECH = 3;
+  // Violence or threats.
   FLAG_REASON_VIOLENCE = 4;
+  // Sexual content.
   FLAG_REASON_SEXUAL_CONTENT = 5;
+  // False or misleading information.
   FLAG_REASON_MISINFORMATION = 6;
+  // Any other reason; explain in details.
   FLAG_REASON_OTHER = 7;
 }
 
+// Moderation state of a comment. Output only, set by the service.
 message Moderation {
-  ModerationStatus status = 1;
-  string moderator_id = 2; // user id of the moderator who last changed the status; empty if never reviewed
-  google.protobuf.Timestamp moderate_time = 3; // when a moderator last changed the status
-  string reason = 4; // moderator's note for the decision, shown to the author on rejection
-  int64 flag_count = 5; // number of distinct users who flagged the comment
+  // Moderation lifecycle of a comment
+  //
+  // A new comment starts as PENDING (pre-moderation) or APPROVED (post-moderation), per tenant policy.
+  // Users can flag an APPROVED comment, moving it to FLAGGED; it stays visible until a moderator reviews it.
+  // Moderators move a comment to APPROVED or REJECTED from any state.
+  // Only APPROVED and FLAGGED comments are visible to users other than the author, and only they are counted.
+  enum State {
+    // Unspecified. Not a valid value.
+    STATE_UNSPECIFIED = 0;
+    // Awaiting review, visible only to the author.
+    STATE_PENDING = 1;
+    // Visible.
+    STATE_APPROVED = 2;
+    // Reported by users, visible until reviewed.
+    STATE_FLAGGED = 3;
+    // Hidden from everyone except the author and moderators.
+    STATE_REJECTED = 4;
+  }
+
+  // Current moderation state.
+  State state = 1;
+  // User id of the moderator who last changed the state; empty if never reviewed.
+  string moderator_id = 2;
+  // When a moderator last changed the state.
+  google.protobuf.Timestamp moderate_time = 3;
+  // Moderator's note for the decision, shown to the author on rejection.
+  string reason = 4;
+  // Number of distinct users who flagged the comment.
+  int64 flag_count = 5;
 }
 
+// Request message for CommentService.CreateComment.
 message CreateCommentRequest {
+  // The comment to create.
   Comment comment = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -77,21 +106,28 @@ message CreateCommentRequest {
   ];
 }
 
+// Response message for CommentService.CreateComment.
 message CreateCommentResponse {
+  // The created comment.
   Comment comment = 1;
 }
 
+// Request message for CommentService.GetComment.
 message GetCommentRequest {
+  // Id of the comment to get.
   string id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for CommentService.GetComment.
 message GetCommentResponse {
+  // The requested comment.
   Comment comment = 1;
 }
 
 // only content can be updated, by the comment's author
 // editing a REJECTED comment is not allowed; under pre-moderation an edit moves the comment back to PENDING
 message UpdateCommentRequest {
+  // The comment to update. Its id identifies the comment.
   Comment comment = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -107,36 +143,49 @@ message UpdateCommentRequest {
   ];
 }
 
+// Response message for CommentService.UpdateComment.
 message UpdateCommentResponse {
+  // The updated comment.
   Comment comment = 1;
 }
 
+// Request message for CommentService.DeleteComment.
 message DeleteCommentRequest {
+  // Id of the comment to delete.
   string id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for CommentService.DeleteComment.
 message DeleteCommentResponse {
+  // The deleted comment.
   Comment comment = 1;
 }
 
 // FilterByParent filters replies to a comment
 message FilterByParent {
+  // Id of the comment whose replies to include.
   string parent_comment_id = 1 [(buf.validate.field).required = true];
 }
 
 // list comments by user, top-level comments on an entity, or replies to a comment
 message ListCommentsRequest {
+  // Which items to include. Exactly one filter is required.
   oneof filter {
     option (buf.validate.oneof).required = true;
-    FilterByUser filter_by_user = 1;
-    FilterByEntity filter_by_entity = 2;
-    FilterByParent filter_by_parent = 5;
+    // Only items made by a user.
+    FilterByUser user_filter = 1;
+    // Only items on an entity.
+    FilterByEntity entity_filter = 2;
+    // Only replies to a comment.
+    FilterByParent parent_filter = 5;
   }
+  // Maximum number of results to return. The server applies a default and a maximum.
   int64 page_size = 3 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
   string page_token = 4;
-  // statuses to include; empty means visible comments only (APPROVED, FLAGGED)
-  // other statuses require ACTION_COMMENT_MODERATE, e.g. FLAGGED + PENDING for a moderation queue
-  repeated ModerationStatus moderation_statuses = 6 [(buf.validate.field).repeated = {
+  // states to include; empty means visible comments only (APPROVED, FLAGGED)
+  // other states require ACTION_COMMENT_MODERATE, e.g. FLAGGED + PENDING for a moderation queue
+  repeated Moderation.State moderation_states = 6 [(buf.validate.field).repeated = {
     unique: true
     items: {
       enum: {
@@ -147,27 +196,37 @@ message ListCommentsRequest {
   }];
 }
 
+// Response message for CommentService.ListComments.
 message ListCommentsResponse {
+  // The comments on this page.
   repeated Comment comments = 1;
+  // Token for the next page. Empty when there are no more results.
   string next_page_token = 2;
 }
 
 // counts visible comments only (APPROVED, FLAGGED)
 message CountCommentsRequest {
+  // Which items to include. Exactly one filter is required.
   oneof filter {
     option (buf.validate.oneof).required = true;
-    FilterByUser filter_by_user = 1;
-    FilterByEntity filter_by_entity = 2;
-    FilterByParent filter_by_parent = 3;
+    // Only items made by a user.
+    FilterByUser user_filter = 1;
+    // Only items on an entity.
+    FilterByEntity entity_filter = 2;
+    // Only replies to a comment.
+    FilterByParent parent_filter = 3;
   }
 }
 
+// Response message for CommentService.CountComments.
 message CountCommentsResponse {
+  // Number of matching items.
   int64 count = 1;
 }
 
 // count visible comments on multiple entities in one call, e.g. for rendering a feed
 message BatchCountCommentsRequest {
+  // Multi tenant id # tenant:entity_type:entity_id.
   repeated string entity_arns = 1 [(buf.validate.field).repeated = {
     min_items: 1
     max_items: 100
@@ -175,53 +234,77 @@ message BatchCountCommentsRequest {
     items: {
       string: {[validation.v1.entity_arn]: true}
     }
-  }]; // multi tenant id # tenant:entity_type:entity_id
+  }];
 }
 
+// Response message for CommentService.BatchCountComments.
 message BatchCountCommentsResponse {
-  map<string, int64> counts = 1; // entity_arn -> count
+  // Entity_arn -> count.
+  map<string, int64> counts = 1;
 }
 
 // a user reports a comment; flagging the same comment twice by the same user has no further effect
 message FlagCommentRequest {
+  // Id of the comment to flag.
   string comment_id = 1 [(buf.validate.field).required = true];
-  string user_id = 2 [(buf.validate.field).required = true]; // user reporting the comment
+  // User reporting the comment.
+  string user_id = 2 [(buf.validate.field).required = true];
+  // Why the comment is being flagged.
   FlagReason reason = 3 [(buf.validate.field).enum = {
     defined_only: true
     not_in: [0]
   }];
-  string details = 4; // optional free text from the user
+  // Optional free text from the user.
+  string details = 4;
 }
 
+// Response message for CommentService.FlagComment.
 message FlagCommentResponse {
+  // The flagged comment.
   Comment comment = 1;
 }
 
 // a moderator approves or rejects a comment; requires ACTION_COMMENT_MODERATE
 message ModerateCommentRequest {
+  // Id of the comment to moderate.
   string comment_id = 1 [(buf.validate.field).required = true];
+  // Id of the moderator making the decision.
   string moderator_id = 2 [(buf.validate.field).required = true];
-  ModerationStatus status = 3 [(buf.validate.field).enum = {
+  // APPROVED or REJECTED.
+  Moderation.State state = 3 [(buf.validate.field).enum = {
     in: [
       2,
       4
     ]
-  }]; // APPROVED or REJECTED
-  string reason = 4; // note for the decision, shown to the author on rejection
+  }];
+  // Note for the decision, shown to the author on rejection.
+  string reason = 4;
 }
 
+// Response message for CommentService.ModerateComment.
 message ModerateCommentResponse {
+  // The moderated comment.
   Comment comment = 1;
 }
 
+// Comments and replies on any entity, with flagging and moderation.
 service CommentService {
+  // Creates a comment.
   rpc CreateComment(CreateCommentRequest) returns (CreateCommentResponse) {}
+  // Gets a comment by id.
   rpc GetComment(GetCommentRequest) returns (GetCommentResponse) {}
+  // Updates a comment.
   rpc UpdateComment(UpdateCommentRequest) returns (UpdateCommentResponse) {}
+  // Deletes a comment and returns it.
   rpc DeleteComment(DeleteCommentRequest) returns (DeleteCommentResponse) {}
+  // Lists comments, a page at a time.
   rpc ListComments(ListCommentsRequest) returns (ListCommentsResponse) {}
+  // Counts comments matching a filter.
   rpc CountComments(CountCommentsRequest) returns (CountCommentsResponse) {}
+  // Counts comments on each of several entities in one call.
   rpc BatchCountComments(BatchCountCommentsRequest) returns (BatchCountCommentsResponse) {}
+  // Reports a comment. The comment stays visible until a moderator reviews it.
   rpc FlagComment(FlagCommentRequest) returns (FlagCommentResponse) {}
+  // Approves or rejects a comment. Requires ACTION_COMMENT_MODERATE.
   rpc ModerateComment(ModerateCommentRequest) returns (ModerateCommentResponse) {}
 }

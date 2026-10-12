@@ -9,16 +9,22 @@ import "validation/v1/rules.proto";
 
 // multi tenant follow capabilities, users can follow any entity (users, brands, content, ...)
 message Follow {
+  // Unique identifier of the follow.
   string id = 1;
-  string user_id = 2; // references id from iam service
+  // References id from iam service.
+  string user_id = 2;
+  // Multi tenant id # tenant:entity_type:entity_id.
   string entity_arn = 3 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.entity_arn) = true
-  ]; // multi tenant id # tenant:entity_type:entity_id
+  ];
+  // Time the follow was created.
   google.protobuf.Timestamp create_time = 4;
 }
 
+// Request message for FollowService.Follow.
 message FollowRequest {
+  // The follow to create.
   Follow follow = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -34,38 +40,51 @@ message FollowRequest {
   ];
 }
 
+// Response message for FollowService.Follow.
 message FollowResponse {
+  // The created follow.
   Follow follow = 1;
 }
 
+// Request message for FollowService.Unfollow.
 message UnfollowRequest {
+  // Id of the user, references iam.
   string user_id = 1 [(buf.validate.field).required = true];
+  // Multi tenant id # tenant:entity_type:entity_id.
   string entity_arn = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.(validation.v1.entity_arn) = true
-  ]; // multi tenant id # tenant:entity_type:entity_id
+  ];
 }
 
 // returns the removed follow
 message UnfollowResponse {
+  // The removed follow.
   Follow follow = 1;
 }
 
+// Request message for FollowService.HasFollowed.
 message HasFollowedRequest {
+  // Id of the user, references iam.
   string user_id = 1 [(buf.validate.field).required = true];
+  // Multi tenant id # tenant:entity_type:entity_id.
   string entity_arn = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.(validation.v1.entity_arn) = true
-  ]; // multi tenant id # tenant:entity_type:entity_id
+  ];
 }
 
+// Response message for FollowService.HasFollowed.
 message HasFollowedResponse {
+  // Whether the user has followed the entity.
   bool has_followed = 1;
 }
 
 // check multiple entities for one user in one call, e.g. for rendering a feed
 message BatchHasFollowedRequest {
+  // Id of the user, references iam.
   string user_id = 1 [(buf.validate.field).required = true];
+  // Multi tenant id # tenant:entity_type:entity_id.
   repeated string entity_arns = 2 [(buf.validate.field).repeated = {
     min_items: 1
     max_items: 100
@@ -73,44 +92,60 @@ message BatchHasFollowedRequest {
     items: {
       string: {[validation.v1.entity_arn]: true}
     }
-  }]; // multi tenant id # tenant:entity_type:entity_id
+  }];
 }
 
+// Response message for FollowService.BatchHasFollowed.
 message BatchHasFollowedResponse {
-  map<string, bool> has_followed = 1; // entity_arn -> whether the user has followed it
+  // Entity_arn -> whether the user has followed it.
+  map<string, bool> has_followed = 1;
 }
 
 // list all follows by user or follows on specific entity
 message ListFollowsRequest {
+  // Which items to include. Exactly one filter is required.
   oneof filter {
     option (buf.validate.oneof).required = true;
-    FilterByUser filter_by_user = 1;
-    FilterByEntity filter_by_entity = 2;
+    // Only items made by a user.
+    FilterByUser user_filter = 1;
+    // Only items on an entity.
+    FilterByEntity entity_filter = 2;
   }
+  // Maximum number of results to return. The server applies a default and a maximum.
   int64 page_size = 3 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
   string page_token = 4;
 }
 
+// Response message for FollowService.ListFollows.
 message ListFollowsResponse {
+  // The follows on this page.
   repeated Follow follows = 1;
+  // Token for the next page. Empty when there are no more results.
   string next_page_token = 2;
 }
 
 // count follows by user or follows on specific entity
 message CountFollowsRequest {
+  // Which items to include. Exactly one filter is required.
   oneof filter {
     option (buf.validate.oneof).required = true;
-    FilterByUser filter_by_user = 1;
-    FilterByEntity filter_by_entity = 2;
+    // Only items made by a user.
+    FilterByUser user_filter = 1;
+    // Only items on an entity.
+    FilterByEntity entity_filter = 2;
   }
 }
 
+// Response message for FollowService.CountFollows.
 message CountFollowsResponse {
+  // Number of matching items.
   int64 count = 1;
 }
 
 // count follows on multiple entities in one call, e.g. for rendering a feed
 message BatchCountFollowsRequest {
+  // Multi tenant id # tenant:entity_type:entity_id.
   repeated string entity_arns = 1 [(buf.validate.field).repeated = {
     min_items: 1
     max_items: 100
@@ -118,19 +153,33 @@ message BatchCountFollowsRequest {
     items: {
       string: {[validation.v1.entity_arn]: true}
     }
-  }]; // multi tenant id # tenant:entity_type:entity_id
+  }];
 }
 
+// Response message for FollowService.BatchCountFollows.
 message BatchCountFollowsResponse {
-  map<string, int64> counts = 1; // entity_arn -> count
+  // Entity_arn -> count.
+  map<string, int64> counts = 1;
 }
 
+// Follows on any entity, such as users, brands or content.
 service FollowService {
+  // Follows an entity.
+  // (-- api-linter: core::0136::verb-noun=disabled
+  //     aip.dev/not-precedent: Follow is the domain verb; the entity is identified by entity_arn. --)
   rpc Follow(FollowRequest) returns (FollowResponse) {}
+  // Stops following an entity and returns the removed follow.
+  // (-- api-linter: core::0136::verb-noun=disabled
+  //     aip.dev/not-precedent: Unfollow is the domain verb; the entity is identified by entity_arn. --)
   rpc Unfollow(UnfollowRequest) returns (UnfollowResponse) {}
+  // Checks whether a user has followed an entity.
   rpc HasFollowed(HasFollowedRequest) returns (HasFollowedResponse) {}
+  // Checks, for each of several entities, whether a user has followed it.
   rpc BatchHasFollowed(BatchHasFollowedRequest) returns (BatchHasFollowedResponse) {}
+  // Lists follows, a page at a time.
   rpc ListFollows(ListFollowsRequest) returns (ListFollowsResponse) {}
+  // Counts follows matching a filter.
   rpc CountFollows(CountFollowsRequest) returns (CountFollowsResponse) {}
+  // Counts follows on each of several entities in one call.
   rpc BatchCountFollows(BatchCountFollowsRequest) returns (BatchCountFollowsResponse) {}
 }

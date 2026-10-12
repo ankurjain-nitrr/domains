@@ -6,7 +6,9 @@ import "bank/v1/bank.proto";
 import "buf/validate/validate.proto";
 import "google/protobuf/field_mask.proto";
 
+// Request message for BankService.CreateBankAccount.
 message CreateBankAccountRequest {
+  // The bank account to create.
   BankAccount bank_account = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -32,62 +34,92 @@ message CreateBankAccountRequest {
   ];
 }
 
+// Response message for BankService.CreateBankAccount.
 message CreateBankAccountResponse {
+  // The created bank account.
   BankAccount bank_account = 1;
 }
 
+// Request message for BankService.GetBankAccount.
 message GetBankAccountRequest {
+  // Account number of the bank account to get.
   string account_number = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for BankService.GetBankAccount.
 message GetBankAccountResponse {
+  // The requested bank account.
   BankAccount bank_account = 1;
 }
 
+// Request message for BankService.ListBankAccounts.
 message ListBankAccountsRequest {
+  // Owner whose bank accounts to list.
   BankAccountOwner owner = 1 [(buf.validate.field).required = true];
+  // Maximum number of results to return. The server applies a default and a maximum.
   int64 page_size = 2 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
   string page_token = 3;
 }
 
+// Response message for BankService.ListBankAccounts.
 message ListBankAccountsResponse {
+  // The bank accounts on this page.
   repeated BankAccount bank_accounts = 1;
+  // Token for the next page. Empty when there are no more results.
   string next_page_token = 2;
 }
 
-// account_status cannot be updated here, use MarkBankAccountAsActive / MarkBankAccountAsInactive
+// account_state cannot be updated here, use MarkBankAccountAsActive / MarkBankAccountAsInactive
 message UpdateBankAccountRequest {
+  // The bank account to update. Its account_number identifies the bank account.
   BankAccount bank_account = 1 [(buf.validate.field).required = true];
   // fields to update; if omitted, all fields set in bank_account are updated (AIP-134)
   google.protobuf.FieldMask update_mask = 2;
 }
 
+// Response message for BankService.UpdateBankAccount.
 message UpdateBankAccountResponse {
+  // The updated bank account.
   BankAccount bank_account = 1;
 }
 
 // message for marking a bank account as inactive
 message MarkBankAccountAsInactiveRequest {
+  // Id of the bank account.
   string bank_account_id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for BankService.MarkBankAccountAsInactive.
 message MarkBankAccountAsInactiveResponse {
+  // The bank account with its updated state.
   BankAccount bank_account = 1;
 }
 
+// Request message for BankService.MarkBankAccountAsActive.
 message MarkBankAccountAsActiveRequest {
+  // Id of the bank account.
   string bank_account_id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for BankService.MarkBankAccountAsActive.
 message MarkBankAccountAsActiveResponse {
+  // The bank account with its updated state.
   BankAccount bank_account = 1;
 }
 
+// Manages bank accounts of users and business entities.
 service BankService {
+  // Creates a bank account.
   rpc CreateBankAccount(CreateBankAccountRequest) returns (CreateBankAccountResponse) {}
+  // Gets a bank account by account number.
   rpc GetBankAccount(GetBankAccountRequest) returns (GetBankAccountResponse) {}
+  // Updates a bank account.
   rpc UpdateBankAccount(UpdateBankAccountRequest) returns (UpdateBankAccountResponse) {}
+  // Lists bank accounts, a page at a time.
   rpc ListBankAccounts(ListBankAccountsRequest) returns (ListBankAccountsResponse) {}
+  // Marks a bank account as inactive, e.g. when blocked or closed.
   rpc MarkBankAccountAsInactive(MarkBankAccountAsInactiveRequest) returns (MarkBankAccountAsInactiveResponse) {}
+  // Marks a bank account as active.
   rpc MarkBankAccountAsActive(MarkBankAccountAsActiveRequest) returns (MarkBankAccountAsActiveResponse) {}
 }

@@ -7,15 +7,27 @@ import "validation/v1/rules.proto";
 
 // Address as per indian postal standards, conventions and practices
 message Address {
-  string house_no = 1; // House number or flat number
-  string building_name = 2; // Name of the building or apartment complex
-  string line_1 = 3; // Street address or primary address line
-  string line_2 = 4; // Secondary address line (if needed)
-  string district = 5; // District name
-  string state = 6; // State name
+  // House number or flat number.
+  string house_no = 1;
+  // Name of the building or apartment complex.
+  string building = 2;
+  // Street address lines, primary first.
+  repeated string address_lines = 3 [(buf.validate.field).repeated.max_items = 2];
+  // District name.
+  string district = 5;
+  // State name.
+  string state = 6;
+  // 6-digit postal code (PIN code) for India.
   string pincode = 7 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.pincode) = true
-  ]; // 6-digit postal code (PIN code) for India
-  string country = 8; // Country name (e.g., "India")
+  ];
+  // CLDR region code of the country, e.g. "IN".
+  string region_code = 8 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = '^[A-Z]{2}$'
+  ];
+
+  reserved 4;
+  reserved "building_name", "line_1", "line_2", "country";
 }

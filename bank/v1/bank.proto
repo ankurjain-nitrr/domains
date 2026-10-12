@@ -5,36 +5,54 @@ package bank.v1;
 import "buf/validate/validate.proto";
 import "validation/v1/rules.proto";
 
+// Type of a bank account.
 enum AccountType {
+  // Unspecified. Not a valid value.
   ACCOUNT_TYPE_UNSPECIFIED = 0;
+  // Savings account.
   ACCOUNT_TYPE_SAVINGS = 1;
+  // Current account, for businesses.
   ACCOUNT_TYPE_CURRENT = 2;
 }
 
-enum AccountStatus {
-  ACCOUNT_STATUS_UNSPECIFIED = 0;
-  ACCOUNT_STATUS_ACTIVE = 1;
-  ACCOUNT_STATUS_INACTIVE = 2; // blocked or closed or inactive for some reason
+// Lifecycle state of a bank account.
+enum AccountState {
+  // Unspecified. Not a valid value.
+  ACCOUNT_STATE_UNSPECIFIED = 0;
+  // The account can be used.
+  ACCOUNT_STATE_ACTIVE = 1;
+  // Blocked or closed or inactive for some reason.
+  ACCOUNT_STATE_INACTIVE = 2;
 }
 
+// A bank account held in India, owned by a user or a business entity.
 message BankAccount {
+  // Owner of the account.
   BankAccountOwner owner = 1;
+  // Account number, 9 to 18 digits.
   string account_number = 2 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.pattern = '^[0-9]{9,18}$'
   ];
+  // Ifsc code of the bank branch.
   string ifsc_code = 3 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.ifsc) = true
-  ]; // ifsc code of the bank branch
+  ];
+  // Type of the account.
   AccountType account_type = 4 [(buf.validate.field).enum.defined_only = true];
-  AccountStatus account_status = 5 [(buf.validate.field).enum.defined_only = true];
+  // Lifecycle state of the account.
+  AccountState account_state = 5 [(buf.validate.field).enum.defined_only = true];
 }
 
+// The user or business entity that owns a bank account.
 message BankAccountOwner {
+  // How the user is identified.
   oneof identifier {
     option (buf.validate.oneof).required = true;
-    string user_id = 1 [(buf.validate.field).string.min_len = 1]; // id of the user who owns the account, references user id from iam service, must have a valid KYC
-    string business_id = 2 [(buf.validate.field).string.min_len = 1]; // id of the business who owns the account, references business id from business service
+    // Id of the user who owns the account, references user id from iam service, must have a valid KYC.
+    string user_id = 1 [(buf.validate.field).string.min_len = 1];
+    // Id of the business who owns the account, references business id from business service.
+    string business_id = 2 [(buf.validate.field).string.min_len = 1];
   }
 }

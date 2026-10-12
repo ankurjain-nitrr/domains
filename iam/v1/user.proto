@@ -8,43 +8,62 @@ import "commons/v1/phone.proto";
 import "google/protobuf/timestamp.proto";
 import "validation/v1/rules.proto";
 
+// A user of the platform.
 message User {
+  // Unique identifier of the user.
   string id = 1;
+  // Name of the user.
   string name = 2;
+  // Email of the user.
   string email = 3 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.email = true
   ];
-  string password = 4; // hashed password, can be used for authentication
+  // Hashed password, can be used for authentication.
+  string password = 4;
+  // Phone numbers of the user.
   repeated commons.v1.Phone phones = 5;
+  // Residential address of the user.
   commons.v1.Address residential_addresses = 6;
-  KYCDetails kyc_details = 7;
+  // Identity documents of the user.
+  KycDetails kyc_details = 7;
+  // Time the user was created.
   google.protobuf.Timestamp create_time = 8;
+  // Time the user was last updated.
   google.protobuf.Timestamp update_time = 9;
+  // Whether the user is active.
   bool is_active = 10;
-  string tenant = 11; // tenant id which was used to create the user
+  // Tenant id which was used to create the user.
+  string tenant = 11;
+  // Role ids for the user.
   repeated string roles = 12 [(buf.validate.field).repeated = {
     unique: true
     items: {
       string: {min_len: 1}
     }
-  }]; // role ids for the user
+  }];
 }
 
-message KYCDetails {
+// Know-your-customer identity documents of a user. All fields are optional.
+message KycDetails {
+  // Aadhaar number, 12 digits.
   string aadhar_card = 1 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.aadhaar) = true
   ];
+  // PAN, e.g. ABCDE1234F.
   string pan_card = 2 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.pan) = true
   ];
+  // Driving licence number. Not validated, formats vary by state.
   string driving_license = 3;
+  // Passport number, a letter and 7 digits.
   string passport = 4 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.pattern = '^[A-Z][0-9]{7}$'
   ];
+  // Voter id (EPIC) number, 3 letters and 7 digits.
   string voter_id = 5 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.pattern = '^[A-Z]{3}[0-9]{7}$'

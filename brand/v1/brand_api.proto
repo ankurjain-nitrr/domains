@@ -6,7 +6,9 @@ import "brand/v1/brand.proto";
 import "buf/validate/validate.proto";
 import "google/protobuf/field_mask.proto";
 
+// Request message for BrandService.CreateBrand.
 message CreateBrandRequest {
+  // The brand to create.
   brand.v1.Brand brand = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -27,39 +29,58 @@ message CreateBrandRequest {
   ];
 }
 
+// Response message for BrandService.CreateBrand.
 message CreateBrandResponse {
+  // The created brand.
   brand.v1.Brand brand = 1;
 }
 
+// Request message for BrandService.GetBrand.
 message GetBrandRequest {
+  // Id of the brand to get.
   string id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for BrandService.GetBrand.
 message GetBrandResponse {
+  // The requested brand.
   brand.v1.Brand brand = 1;
 }
 
+// Request message for BrandService.UpdateBrand.
 message UpdateBrandRequest {
+  // The brand to update. Its id identifies the brand.
   brand.v1.Brand brand = 1 [(buf.validate.field).required = true];
   // fields to update; if omitted, all fields set in brand are updated (AIP-134)
   google.protobuf.FieldMask update_mask = 2;
 }
 
+// Response message for BrandService.UpdateBrand.
 message UpdateBrandResponse {
+  // The updated brand.
   brand.v1.Brand brand = 1;
 }
 
+// Request message for BrandService.DeleteBrand.
 message DeleteBrandRequest {
+  // Id of the brand to delete.
   string id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for BrandService.DeleteBrand.
 message DeleteBrandResponse {
+  // The deleted brand.
   brand.v1.Brand brand = 1;
 }
 
+// Manages brands owned by users or business entities.
 service BrandService {
+  // Creates a brand.
   rpc CreateBrand(CreateBrandRequest) returns (CreateBrandResponse) {}
+  // Gets a brand by id.
   rpc GetBrand(GetBrandRequest) returns (GetBrandResponse) {}
+  // Updates a brand.
   rpc UpdateBrand(UpdateBrandRequest) returns (UpdateBrandResponse) {}
+  // Deletes a brand and returns it.
   rpc DeleteBrand(DeleteBrandRequest) returns (DeleteBrandResponse) {}
 }

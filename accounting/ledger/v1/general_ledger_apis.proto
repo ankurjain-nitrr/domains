@@ -5,7 +5,9 @@ package accounting.ledger.v1;
 import "accounting/ledger/v1/general_ledger.proto";
 import "buf/validate/validate.proto";
 
+// Request message for GeneralLedgerService.CreateGeneralLedger.
 message CreateGeneralLedgerRequest {
+  // The general ledger to create.
   accounting.ledger.v1.GeneralLedger general_ledger = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -21,37 +23,55 @@ message CreateGeneralLedgerRequest {
   ];
 }
 
+// Response message for GeneralLedgerService.CreateGeneralLedger.
 message CreateGeneralLedgerResponse {
+  // The created general ledger.
   accounting.ledger.v1.GeneralLedger general_ledger = 1;
 }
 
+// Request message for GeneralLedgerService.GetGeneralLedger.
 message GetGeneralLedgerRequest {
+  // Id of the general ledger to get.
   string general_ledger_id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for GeneralLedgerService.GetGeneralLedger.
 message GetGeneralLedgerResponse {
+  // The requested general ledger.
   accounting.ledger.v1.GeneralLedger general_ledger = 1;
 }
 
+// Request message for GeneralLedgerService.UpdateGeneralLedger.
 message UpdateGeneralLedgerRequest {
-  string general_ledger_id = 1 [(buf.validate.field).required = true];
+  // The general ledger to update. Its id identifies the general ledger.
   accounting.ledger.v1.GeneralLedger general_ledger = 2 [(buf.validate.field).required = true];
+
+  // the id is taken from general_ledger.id
+  reserved 1;
+  reserved "general_ledger_id";
 }
 
+// Response message for GeneralLedgerService.UpdateGeneralLedger.
 message UpdateGeneralLedgerResponse {
+  // The updated general ledger.
   accounting.ledger.v1.GeneralLedger general_ledger = 1;
 }
 
+// Request message for GeneralLedgerService.DeleteGeneralLedger.
 message DeleteGeneralLedgerRequest {
+  // Id of the general ledger to delete.
   string general_ledger_id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for GeneralLedgerService.DeleteGeneralLedger.
 message DeleteGeneralLedgerResponse {
+  // The deleted general ledger.
   accounting.ledger.v1.GeneralLedger general_ledger = 1;
 }
 
 // Create general ledger entry
 message CreateGeneralLedgerEntryRequest {
+  // The general ledger entry to create.
   accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -82,44 +102,70 @@ message CreateGeneralLedgerEntryRequest {
   ];
 }
 
+// Response message for GeneralLedgerService.CreateGeneralLedgerEntry.
 message CreateGeneralLedgerEntryResponse {
+  // The created general ledger entry.
   accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
 }
 
+// Request message for GeneralLedgerService.GetGeneralLedgerEntry.
 message GetGeneralLedgerEntryRequest {
+  // Id of the general ledger entry to get.
   string general_ledger_entry_id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for GeneralLedgerService.GetGeneralLedgerEntry.
 message GetGeneralLedgerEntryResponse {
+  // The requested general ledger entry.
   accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
 }
 
+// Request message for GeneralLedgerService.UpdateGeneralLedgerEntry.
 message UpdateGeneralLedgerEntryRequest {
+  // The general ledger entry to update. Its id identifies the general ledger entry.
   accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 2 [(buf.validate.field).required = true];
 }
 
+// Response message for GeneralLedgerService.UpdateGeneralLedgerEntry.
 message UpdateGeneralLedgerEntryResponse {
+  // The updated general ledger entry.
   accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
 }
 
+// Request message for GeneralLedgerService.ListGeneralLedgerEntries.
 message ListGeneralLedgerEntriesRequest {
+  // Id of the ledger whose entries to list.
   string general_ledger_id = 1 [(buf.validate.field).required = true];
+  // Maximum number of results to return. The server applies a default and a maximum.
   int64 page_size = 2 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
   string page_token = 3;
 }
 
+// Response message for GeneralLedgerService.ListGeneralLedgerEntries.
 message ListGeneralLedgerEntriesResponse {
+  // The general ledger entries on this page.
   repeated accounting.ledger.v1.GeneralLedgerEntry general_ledger_entries = 1;
+  // Token for the next page. Empty when there are no more results.
   string next_page_token = 2;
 }
 
+// Manages general ledgers and their entries.
 service GeneralLedgerService {
+  // Creates a general ledger.
   rpc CreateGeneralLedger(CreateGeneralLedgerRequest) returns (CreateGeneralLedgerResponse) {}
+  // Gets a general ledger by id.
   rpc GetGeneralLedger(GetGeneralLedgerRequest) returns (GetGeneralLedgerResponse) {}
+  // Updates a general ledger.
   rpc UpdateGeneralLedger(UpdateGeneralLedgerRequest) returns (UpdateGeneralLedgerResponse) {}
+  // Deletes a general ledger and returns it.
   rpc DeleteGeneralLedger(DeleteGeneralLedgerRequest) returns (DeleteGeneralLedgerResponse) {}
+  // Creates a general ledger entry.
   rpc CreateGeneralLedgerEntry(CreateGeneralLedgerEntryRequest) returns (CreateGeneralLedgerEntryResponse) {}
+  // Gets a general ledger entry by id.
   rpc GetGeneralLedgerEntry(GetGeneralLedgerEntryRequest) returns (GetGeneralLedgerEntryResponse) {}
+  // Updates a general ledger entry.
   rpc UpdateGeneralLedgerEntry(UpdateGeneralLedgerEntryRequest) returns (UpdateGeneralLedgerEntryResponse) {}
+  // Lists general ledger entries, a page at a time.
   rpc ListGeneralLedgerEntries(ListGeneralLedgerEntriesRequest) returns (ListGeneralLedgerEntriesResponse) {}
 }

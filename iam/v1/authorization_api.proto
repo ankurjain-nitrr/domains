@@ -7,8 +7,11 @@ import "iam/v1/actions.proto";
 
 // checks if the user has the permission to perform the action on the resource or has a specific permission
 message AuthorizeRequest {
+  // Actions to check on one resource.
   message ResourceAction {
-    string resource = 1 [(buf.validate.field).required = true]; // resource arn
+    // Resource arn.
+    string resource = 1 [(buf.validate.field).required = true];
+    // Actions to check. All must be allowed.
     repeated Action actions = 2 [(buf.validate.field).repeated = {
       min_items: 1
       unique: true
@@ -20,18 +23,28 @@ message AuthorizeRequest {
       }
     }];
   }
-  string token = 1 [(buf.validate.field).required = true]; //user token
+  // User token.
+  string token = 1 [(buf.validate.field).required = true];
+  // What to check: actions on a resource, or a specific permission.
   oneof permission {
     option (buf.validate.oneof).required = true;
+    // Check actions on a resource.
     ResourceAction resource_action = 2;
-    string permission_id = 3 [(buf.validate.field).string.min_len = 1]; // id of the permission
+    // Id of the permission.
+    string permission_id = 3 [(buf.validate.field).string.min_len = 1];
   }
 }
 
+// Response message for AuthorizationService.Authorize.
 message AuthorizeResponse {
+  // Whether the user is authorized.
   bool authorized = 1;
 }
 
+// Checks whether a token's user may perform actions on a resource.
 service AuthorizationService {
+  // Checks whether the token's user may perform actions on a resource, or holds a permission.
+  // (-- api-linter: core::0136::verb-noun=disabled
+  //     aip.dev/not-precedent: Authorize is the established name for this check. --)
   rpc Authorize(AuthorizeRequest) returns (AuthorizeResponse) {}
 }

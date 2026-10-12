@@ -1,157 +1,112 @@
-# Define the shell to use
 SHELL := /bin/bash
 
-# Define variables for directories
 GEN_DIR := gen
-PROTO_DIR := proto
+GO_GEN_DIR := $(GEN_DIR)/proto/go
+BIN_DIR := $(CURDIR)/bin
+DESCRIPTORS := $(GEN_DIR)/descriptors.binpb
 
-# Define tool versions
-BUF_VERSION := 1.17.0
-PROTOC_GEN_GO_VERSION := v1.28.0
-PROTOC_GEN_JAVA_VERSION := 3.21.7
-PROTOBUF_VERSION := 3.21.7
+# Tool versions. Code generation plugin versions are pinned in buf.gen.yaml.
+API_LINTER_VERSION := v2.4.0
 
+.DEFAULT_GOAL := check
 
-GRPC_JAVA_VERSION := 1.68.0
-PROTOC_GEN_GRPC_JAVA_PATH := $(HOME)/bin/protoc-gen-grpc-java
-JAVA_SRC_DIR := $(GEN_DIR)/proto/java
-JAVA_BUILD_DIR := $(GEN_DIR)/build/java
-JARS_DIR := $(GEN_DIR)/build/jars
-# Define the default target
-.DEFAULT_GOAL := all
+.PHONY: check all init generate lint format format-check api-lint lock-check compile-go compile-java deps clean help \
+	install-buf install-maven install-api-linter check_buf check_go check_java check_maven check_os check_brew
 
-# PHONY targets
-.PHONY: all generate lint format clean help init install-buf install-protoc-gen-go install-protoc-gen-java check_buf check_go check_java check_os install-protoc-gen-grpc-java install-protoc-gen-go-grpc compile-java create-jars check_brew check_maven install-maven deps
+# Everything CI runs
+check: format-check lint api-lint lock-check compile-go compile-java
+	@echo "All checks passed."
 
-# Default target: clean, lint, and generate
-all: clean lint deps generate
-	@echo "All tasks completed successfully."
+all: clean check
 
-# Initialize the project by installing dependencies (macOS only)
-init: check_os check_brew check_go check_java install-buf install-protoc-gen-go install-protoc-gen-java install-protoc-gen-go-grpc install-protoc-gen-grpc-java install-maven
+# Install tools (macOS only). Go, Java and Homebrew must already be installed.
+init: check_os check_brew check_go check_java install-buf install-maven install-api-linter
 	@echo "Initialization complete."
 
-# Check if running on macOS
-check_os:
-	@if [ "$$(uname)" != "Darwin" ]; then \
-		echo "Error: 'make init' is currently only supported on macOS."; \
-		echo "For other operating systems, please install the required dependencies manually."; \
-		exit 1; \
-	fi
-
-# Check if Homebrew is installed
-check_brew:
-	@which brew > /dev/null || (echo "Error: Homebrew is not installed. Please install it from https://brew.sh/" && exit 1)
-
-# Install buf
-install-buf: check_brew
-	@echo "Checking buf installation..."
-	@if ! command -v buf &> /dev/null; then \
-		echo "Installing buf..."; \
-		brew install bufbuild/buf/buf; \
-	else \
-		echo "buf is already installed."; \
-	fi
-
-# Install protoc-gen-go
-install-protoc-gen-go: check_brew check_go
-	@echo "Checking protoc-gen-go installation..."
-	@if ! command -v protoc-gen-go &> /dev/null; then \
-		echo "Installing protoc-gen-go..."; \
-		brew install protoc-gen-go; \
-	else \
-		echo "protoc-gen-go is already installed."; \
-	fi
-
-install-protoc-gen-grpc-java: 
-	@echo "Checking protoc-gen-grpc-java installation..."
-	@if [ ! -f "$(PROTOC_GEN_GRPC_JAVA_PATH)" ]; then \
-		echo "Installing protoc-gen-grpc-java..."; \
-		mkdir -p $(HOME)/bin; \
-		curl -L https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/$(GRPC_JAVA_VERSION)/protoc-gen-grpc-java-$(GRPC_JAVA_VERSION)-osx-x86_64.exe -o $(PROTOC_GEN_GRPC_JAVA_PATH); \
-		chmod +x $(PROTOC_GEN_GRPC_JAVA_PATH); \
-	else \
-		echo "protoc-gen-grpc-java is already installed."; \
-	fi
-
-install-protoc-gen-go-grpc:
-	@echo "Installing protoc-gen-go-grpc..."
-	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-
-# Generate code from proto files
-generate: check_buf deps
-	@echo "Generating code..."
+# Generate Go and Java code with the pinned remote plugins in buf.gen.yaml
+generate: check_buf
 	@buf generate
-	@echo "Code generation complete."
 
-# Lint proto files
+# buf lint: STANDARD and COMMENTS rules, including protovalidate rule checks
 lint: check_buf
-	@echo "Linting proto files..."
 	@buf lint
-	@echo "Linting complete."
 
 # Format proto files in place
 format: check_buf
-	@echo "Formatting proto files..."
 	@buf format -w
-	@echo "Formatting complete."
 
-# Clean generated files
-clean:
-	@echo "Cleaning generated files..."
-	@rm -rf $(GEN_DIR)
-	@echo "Clean complete."
+# Fail if any proto file isn't formatted
+format-check: check_buf
+	@buf format -d --exit-code
 
-# Help target
-help:
-	@echo "Available targets:"
-	@echo "  all                  : Run clean, lint, and generate"
-	@echo "  init                 : Install all dependencies (macOS only)"
-	@echo "  install-buf          : Install buf (macOS only)"
-	@echo "  install-protoc-gen-go: Install protoc-gen-go (macOS only)"
-	@echo "  install-protoc-gen-java: Install protoc-gen-java (macOS only)"
-	@echo "  generate             : Generate code from proto files"
-	@echo "  lint                 : Lint proto files"
-	@echo "  format               : Format proto files in place"
-	@echo "  clean                : Remove generated files"
-	@echo "  help                 : Show this help message"
-	@echo ""
-	@echo "Note: 'make init' and installation targets are currently only supported on macOS."
-	@echo "For other operating systems, please install the required dependencies manually."
+# Google API linter (AIPs), configured in .api-linter.yaml
+api-lint: check_buf install-api-linter
+	@mkdir -p $(GEN_DIR)
+	@buf build -o $(DESCRIPTORS)
+	@$(BIN_DIR)/api-linter --config .api-linter.yaml --descriptor-set-in $(DESCRIPTORS) --skip-compilation \
+		--set-exit-status --output-format summary $$(buf ls-files)
 
-# Check if buf is installed
-check_buf:
-	@which buf > /dev/null || (echo "Error: buf is not installed. Please run 'make install-buf' to install it." && exit 1)
+# Fail if buf.lock has entries buf.yaml no longer needs. Deps missing from buf.lock already fail `buf build`.
+lock-check: check_buf
+	@buf dep prune
+	@git diff --exit-code -- buf.lock || (echo "buf.lock is out of date with buf.yaml: commit the change above." && exit 1)
 
-# Check if Go is installed
-check_go:
-	@which go > /dev/null || (echo "Error: Go is not installed. Please install Go from https://golang.org/doc/install" && exit 1)
+# Compile and vet the generated Go code against the pinned module in build/go
+compile-go: generate check_go
+	@cp build/go/go.mod build/go/go.sum $(GO_GEN_DIR)/
+	@cd $(GO_GEN_DIR) && go build ./... && go vet ./...
 
-# Check if Java is installed
-check_java:
-	@which java > /dev/null || (echo "Error: Java is not installed. Please install Java from https://adoptopenjdk.net/" && exit 1)
-
-# Compile Java files
+# Compile the generated Java code with build/java/pom.xml
 compile-java: generate check_maven
-	@echo "Compiling Java files for Java $(JAVA_VERSION)..."
-	@$(MVN) compile -P java$(JAVA_VERSION)
+	@mvn -q -B -f build/java/pom.xml compile
 
-# Check if Maven is installed
-check_maven:
-	@which mvn > /dev/null || (echo "Error: Maven is not installed. Please install Maven from https://maven.apache.org/install.html" && exit 1)
+# Update dependencies in buf.lock to their latest versions
+deps: check_buf
+	@buf dep update
+
+clean:
+	@rm -rf $(GEN_DIR) build/java/target $(BIN_DIR)
+
+help:
+	@echo "Targets:"
+	@echo "  check         Run everything CI runs (default)"
+	@echo "  all           clean, then check"
+	@echo "  init          Install buf, Maven and api-linter (macOS only)"
+	@echo "  generate      Generate Go and Java code into gen/"
+	@echo "  lint          buf lint (STANDARD + COMMENTS)"
+	@echo "  format        Format proto files in place"
+	@echo "  format-check  Fail if any proto file isn't formatted"
+	@echo "  api-lint      Google API linter (AIPs)"
+	@echo "  lock-check    Fail if buf.lock is out of date with buf.yaml"
+	@echo "  compile-go    Generate and compile the Go code"
+	@echo "  compile-java  Generate and compile the Java code"
+	@echo "  deps          Update buf.lock to the latest dependency versions"
+	@echo "  clean         Remove gen/, build outputs and installed tools"
+
+install-buf: check_brew
+	@command -v buf &> /dev/null || brew install bufbuild/buf/buf
 
 install-maven: check_brew
-	@echo "Checking Maven installation..."
-	@if ! command -v mvn &> /dev/null; then \
-		echo "Installing Maven..."; \
-		brew install maven; \
-	else \
-		echo "Maven is already installed."; \
-	fi
+	@command -v mvn &> /dev/null || brew install maven
 
-# Download dependencies
-deps:
-	@echo "Downloading dependencies..."
-	@buf dep update
-	@echo "Dependencies downloaded."
+install-api-linter: check_go
+	@[ -x $(BIN_DIR)/api-linter ] && [ "$$($(BIN_DIR)/api-linter --version)" = "api-linter $(API_LINTER_VERSION:v%=%)" ] || \
+		GOBIN=$(BIN_DIR) go install github.com/googleapis/api-linter/v2/cmd/api-linter@$(API_LINTER_VERSION)
 
+check_os:
+	@[ "$$(uname)" = "Darwin" ] || (echo "Error: 'make init' only supports macOS; install the tools manually." && exit 1)
+
+check_brew:
+	@which brew > /dev/null || (echo "Error: Homebrew is not installed. See https://brew.sh/" && exit 1)
+
+check_buf:
+	@which buf > /dev/null || (echo "Error: buf is not installed. Run 'make install-buf'." && exit 1)
+
+check_go:
+	@which go > /dev/null || (echo "Error: Go is not installed. See https://go.dev/doc/install" && exit 1)
+
+check_java:
+	@which java > /dev/null || (echo "Error: Java is not installed." && exit 1)
+
+check_maven:
+	@which mvn > /dev/null || (echo "Error: Maven is not installed. Run 'make install-maven'." && exit 1)

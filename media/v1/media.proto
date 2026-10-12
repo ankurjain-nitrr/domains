@@ -2,10 +2,14 @@ syntax = "proto3";
 
 package media.v1;
 
+// An image. Fields are not modeled yet.
 message Image {}
 
+// A video. Fields are not modeled yet.
 message Video {}
 
+// A list of images.
 message ImageCollection {
+  // The values.
   repeated Image values = 1;
 }

@@ -7,15 +7,19 @@ import "validation/v1/rules.proto";
 
 // FilterByUser selects interactions made by a user
 message FilterByUser {
-  string user_id = 1 [(buf.validate.field).required = true]; // references id from iam service
+  // References id from iam service.
+  string user_id = 1 [(buf.validate.field).required = true];
+  // Tenant to search in.
   string tenant = 2;
-  string entity_type = 3; // optional
+  // Optional.
+  string entity_type = 3;
 }
 
 // FilterByEntity selects interactions made on an entity
 message FilterByEntity {
+  // Multi tenant id # tenant:entity_type:entity_id.
   string entity_arn = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.(validation.v1.entity_arn) = true
-  ]; // multi tenant id # tenant:entity_type:entity_id
+  ];
 }

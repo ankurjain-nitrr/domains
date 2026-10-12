@@ -6,30 +6,45 @@ import "buf/validate/validate.proto";
 import "media/v1/media.proto";
 import "validation/v1/rules.proto";
 
+// Kind of owner of a brand.
 enum BrandOwnerType {
+  // Unspecified. Not a valid value.
   BRAND_OWNER_TYPE_UNSPECIFIED = 0;
+  // Owned by an individual user.
   BRAND_OWNER_TYPE_INDIVIDUAL = 1;
+  // Owned by a business entity.
   BRAND_OWNER_TYPE_COMPANY = 2;
 }
 
+// A brand, owned by an individual or a company.
 message Brand {
+  // Unique identifier of the brand.
   string id = 1;
+  // Name of the brand.
   string name = 2;
+  // Short tagline shown with the brand.
   string tagline = 3;
+  // Description of the brand.
   string description = 4;
+  // Logo of the brand.
   media.v1.Image logo = 5;
+  // Website of the brand, an http:// or https:// URL.
   string website = 6 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.http_url) = true
-  ]; // must start with http:// or https://
-  string owner_id = 7; // must be registered as user in iam service or business entity in entity service service
+  ];
+  // Id of the owning user (iam) or business entity, per owner_type.
+  string owner_id = 7;
+  // Whether owner_id is a user or a business entity.
   BrandOwnerType owner_type = 8 [(buf.validate.field).enum.defined_only = true];
+  // Trademark class under the Nice classification, 1 to 45.
   int32 trademark_class = 9 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).int32 = {
       gte: 1
       lte: 45
     }
-  ]; // must be between 1 and 45
+  ];
+  // Whether the brand is active.
   bool is_active = 10;
 }

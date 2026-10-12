@@ -5,16 +5,18 @@ package commons.v1;
 import "buf/validate/validate.proto";
 import "validation/v1/rules.proto";
 
-// Country code list: https://en.wikipedia.org/wiki/List_of_country_calling_codes
-
-// Phone represents a phone number with country code
+// Phone represents a phone number with country calling code
 message Phone {
-  string country_code = 1 [
+  // Country calling code, e.g. +91. See https://en.wikipedia.org/wiki/List_of_country_calling_codes.
+  string calling_code = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.(validation.v1.calling_code) = true
   ];
+  // Phone number without the calling code, 4 to 14 digits.
   string number = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.pattern = '^[0-9]{4,14}$'
   ];
+
+  reserved "country_code";
 }

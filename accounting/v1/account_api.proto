@@ -5,7 +5,9 @@ package accounting.v1;
 import "accounting/v1/account.proto";
 import "buf/validate/validate.proto";
 
+// Request message for AccountService.CreateAccount.
 message CreateAccountRequest {
+  // The account to create.
   accounting.v1.Account account = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -16,37 +18,56 @@ message CreateAccountRequest {
   ];
 }
 
+// Response message for AccountService.CreateAccount.
 message CreateAccountResponse {
+  // The created account.
   accounting.v1.Account account = 1;
 }
 
+// Request message for AccountService.GetAccount.
 message GetAccountRequest {
+  // Id of the account to get.
   string account_id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for AccountService.GetAccount.
 message GetAccountResponse {
+  // The requested account.
   accounting.v1.Account account = 1;
 }
 
+// Request message for AccountService.UpdateAccount.
 message UpdateAccountRequest {
+  // The account to update. Its id identifies the account.
   accounting.v1.Account account = 2 [(buf.validate.field).required = true];
 }
 
+// Response message for AccountService.UpdateAccount.
 message UpdateAccountResponse {
+  // The updated account.
   accounting.v1.Account account = 1;
 }
 
+// Request message for AccountService.DeleteAccount.
 message DeleteAccountRequest {
+  // Id of the account to delete.
   string account_id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for AccountService.DeleteAccount.
 message DeleteAccountResponse {
+  // The deleted account.
   accounting.v1.Account account = 1;
 }
 
+// Manages accounts, the owner of ledgers in the accounting domain.
 service AccountService {
+  // Creates an account.
   rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}
+  // Gets an account by id.
   rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {}
+  // Updates an account.
   rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse) {}
+  // Deletes an account and returns it.
   rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {}
 }

@@ -6,3 +6,6 @@ gen/
 
 # OS files
 .DS_Store
+# Build outputs and tools
+bin/
+build/java/target/

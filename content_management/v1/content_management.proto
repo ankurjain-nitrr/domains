@@ -7,13 +7,22 @@ import "media/v1/media.proto";
 
 // Content represents a piece of content with title, text, images, videos, and metadata
 message Content {
+  // Unique identifier of the content.
   string id = 1;
+  // Title of the content.
   string title = 2;
+  // Body text of the content.
   string text = 3;
+  // Images attached to the content.
   repeated media.v1.Image images = 4;
+  // Videos attached to the content.
   repeated media.v1.Video videos = 5;
-  string created_by = 6; // references user id from user management service
+  // Id of the user who created the content, references iam.
+  string creator = 6;
+  // Time the content was created.
   google.protobuf.Timestamp create_time = 7;
-  string updated_by = 8; // references user id from user management service // can be updated by moderators
+  // Id of the user who last updated the content (the author or a moderator), references iam.
+  string updater = 8;
+  // Time the content was last updated.
   google.protobuf.Timestamp update_time = 9;
 }

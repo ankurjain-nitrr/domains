@@ -8,18 +8,62 @@ on:
 permissions:
   contents: read
 
+env:
+  BUF_VERSION: 1.73.0
+
 jobs:
-  build:
+  # Compiles all protos, runs buf lint (STANDARD + COMMENTS, incl. protovalidate rules), checks formatting and buf.lock
+  buf:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      # compiles all protos (buf build), runs buf lint and checks buf format
       - uses: bufbuild/buf-action@v1
         with:
-          version: 1.73.0
+          version: ${{ env.BUF_VERSION }}
           lint: true
-          format: true # fails if any file differs from `buf format`
+          format: true
           breaking: false # pre-release; enable once the APIs are published
           push: false
           archive: false
           pr_comment: false
+      - name: buf.lock is up to date
+        run: make lock-check
+
+  # Google API linter (AIPs), configured in .api-linter.yaml
+  api-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: build/go/go.mod
+          cache-dependency-path: build/go/go.sum
+      - uses: bufbuild/buf-action@v1
+        with:
+          version: ${{ env.BUF_VERSION }}
+          setup_only: true
+      - run: make api-lint
+
+  # buf generate with the pinned remote plugins, then compile the generated Go and Java
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: build/go/go.mod
+          cache-dependency-path: build/go/go.sum
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: build/java/pom.xml
+      - uses: bufbuild/buf-action@v1
+        with:
+          version: ${{ env.BUF_VERSION }}
+          setup_only: true
+      - name: Compile generated Go
+        run: make compile-go
+      - name: Compile generated Java
+        run: make compile-java

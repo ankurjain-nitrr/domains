@@ -6,51 +6,78 @@ import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "validation/v1/rules.proto";
 
+// Request message for AuthenticationService.LoginWithPassword.
 message LoginWithPasswordRequest {
+  // How the user is identified.
   oneof identifier {
     option (buf.validate.oneof).required = true;
+    // Email of the user.
     string email = 1 [(buf.validate.field).string.email = true];
+    // Phone number of the user in E.164 format.
     string phone = 2 [(buf.validate.field).string.(validation.v1.phone_e164) = true];
   }
+  // Password of the user.
   string password = 3 [(buf.validate.field).required = true];
 }
 
+// Response message for AuthenticationService.LoginWithPassword.
 message LoginWithPasswordResponse {
+  // Access token for the user.
   string token = 1;
 }
 
-message GenerateOTPRequest {
+// Request message for AuthenticationService.GenerateOtp.
+message GenerateOtpRequest {
+  // How the user is identified.
   oneof identifier {
     option (buf.validate.oneof).required = true;
+    // Email to send the OTP to.
     string email = 1 [(buf.validate.field).string.email = true];
+    // Phone number in E.164 format to send the OTP to.
     string phone = 2 [(buf.validate.field).string.(validation.v1.phone_e164) = true];
   }
 }
 
-message GenerateOTPResponse {}
+// Response message for AuthenticationService.GenerateOtp.
+message GenerateOtpResponse {}
 
 // verify OTP
-message VerifyOTPRequest {
+message VerifyOtpRequest {
+  // How the user is identified.
   oneof identifier {
     option (buf.validate.oneof).required = true;
+    // Email the OTP was sent to.
     string email = 1 [(buf.validate.field).string.email = true];
+    // Phone number the OTP was sent to, in E.164 format.
     string phone = 2 [(buf.validate.field).string.(validation.v1.phone_e164) = true];
   }
+  // The 6-digit OTP the user received.
   string otp = 3 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.pattern = '^[0-9]{6}$'
   ];
 }
 
-message VerifyOTPResponse {
+// Response message for AuthenticationService.VerifyOtp.
+message VerifyOtpResponse {
+  // Access token for the user.
   string token = 1;
+  // Token to obtain a new access token after it expires.
   string refresh_token = 2;
+  // Time the access token expires.
   google.protobuf.Timestamp token_expire_time = 3;
+  // Time the refresh token expires.
   google.protobuf.Timestamp refresh_token_expire_time = 4;
 }
 
+// Authenticates users with an OTP or a password and issues tokens.
 service AuthenticationService {
-  rpc GenerateOTP(GenerateOTPRequest) returns (GenerateOTPResponse) {}
-  rpc VerifyOTP(VerifyOTPRequest) returns (VerifyOTPResponse) {}
+  // Sends a one-time password to the user's email or phone.
+  rpc GenerateOtp(GenerateOtpRequest) returns (GenerateOtpResponse) {}
+  // Verifies a one-time password and issues tokens.
+  rpc VerifyOtp(VerifyOtpRequest) returns (VerifyOtpResponse) {}
+  // Logs a user in with an email or phone and a password.
+  // (-- api-linter: core::0136::prepositions=disabled
+  //     aip.dev/not-precedent: Distinguishes password login from the OTP flow. --)
   rpc LoginWithPassword(LoginWithPasswordRequest) returns (LoginWithPasswordResponse) {}
 }

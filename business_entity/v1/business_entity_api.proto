@@ -6,7 +6,9 @@ import "buf/validate/validate.proto";
 import "business_entity/v1/business_entity.proto";
 import "google/protobuf/field_mask.proto";
 
+// Request message for BusinessEntityService.CreateBusinessEntity.
 message CreateBusinessEntityRequest {
+  // The business entity to create.
   business_entity.v1.BusinessEntity business_entity = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -32,39 +34,58 @@ message CreateBusinessEntityRequest {
   ];
 }
 
+// Response message for BusinessEntityService.CreateBusinessEntity.
 message CreateBusinessEntityResponse {
+  // Id of the created business entity.
   string id = 1;
 }
 
+// Request message for BusinessEntityService.GetBusinessEntity.
 message GetBusinessEntityRequest {
+  // Id of the business entity to get.
   string id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for BusinessEntityService.GetBusinessEntity.
 message GetBusinessEntityResponse {
+  // The requested business entity.
   business_entity.v1.BusinessEntity business_entity = 1;
 }
 
+// Request message for BusinessEntityService.UpdateBusinessEntity.
 message UpdateBusinessEntityRequest {
+  // The business entity to update. Its id identifies the business entity.
   business_entity.v1.BusinessEntity business_entity = 1 [(buf.validate.field).required = true];
   // fields to update; if omitted, all fields set in business_entity are updated (AIP-134)
   google.protobuf.FieldMask update_mask = 2;
 }
 
+// Response message for BusinessEntityService.UpdateBusinessEntity.
 message UpdateBusinessEntityResponse {
+  // The updated business entity.
   business_entity.v1.BusinessEntity business_entity = 1;
 }
 
+// Request message for BusinessEntityService.DeleteBusinessEntity.
 message DeleteBusinessEntityRequest {
+  // Id of the business entity to delete.
   string id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for BusinessEntityService.DeleteBusinessEntity.
 message DeleteBusinessEntityResponse {
+  // The deleted business entity.
   business_entity.v1.BusinessEntity business_entity = 1;
 }
 
+// Manages business entities registered under Indian law.
 service BusinessEntityService {
+  // Creates a business entity.
   rpc CreateBusinessEntity(CreateBusinessEntityRequest) returns (CreateBusinessEntityResponse) {}
+  // Gets a business entity by id.
   rpc GetBusinessEntity(GetBusinessEntityRequest) returns (GetBusinessEntityResponse) {}
+  // Updates a business entity.
   rpc UpdateBusinessEntity(UpdateBusinessEntityRequest) returns (UpdateBusinessEntityResponse) {}
+  // Deletes a business entity and returns it.
   rpc DeleteBusinessEntity(DeleteBusinessEntityRequest) returns (DeleteBusinessEntityResponse) {}
 }

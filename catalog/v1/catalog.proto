@@ -6,30 +6,49 @@ import "buf/validate/validate.proto";
 import "collections/v1/collections.proto";
 import "media/v1/media.proto";
 
+// A catalog of products.
 message Catalog {
-  string id = 1; // id of the catalog
-  string name = 2; // name of the catalog
-  string description = 3; // description of the catalog
+  // Id of the catalog.
+  string id = 1;
+  // Name of the catalog.
+  string name = 2;
+  // Description of the catalog.
+  string description = 3;
 }
 
 // nested message for category
 message Category {
-  string id = 1; // id of the category
-  string name = 2; // name of the category
-  string description = 3; // description of the category
-  repeated media.v1.Image images = 4; // images of the category
-  repeated Category subcategories = 5; // subcategories of the category
-  repeated Attribute attributes = 6; // attributes of the category
+  // Id of the category.
+  string id = 1;
+  // Name of the category.
+  string name = 2;
+  // Description of the category.
+  string description = 3;
+  // Images of the category.
+  repeated media.v1.Image images = 4;
+  // Subcategories of the category.
+  repeated Category subcategories = 5;
+  // Attributes of the category.
+  repeated Attribute attributes = 6;
 }
 
+// Type of the values an attribute holds.
 enum AttributeType {
+  // Unspecified. Not a valid value.
   ATTRIBUTE_TYPE_UNSPECIFIED = 0;
-  ATTRIBUTE_TYPE_TEXT = 1; // validation based on length, regex, or specific values
-  ATTRIBUTE_TYPE_NUMBER = 2; // whole number; validation based on range or specific values
+  // Validation based on length, regex, or specific values.
+  ATTRIBUTE_TYPE_TEXT = 1;
+  // Whole number; validation based on range or specific values.
+  ATTRIBUTE_TYPE_NUMBER = 2;
+  // True or false.
   ATTRIBUTE_TYPE_BOOLEAN = 3;
+  // Decimal number.
   ATTRIBUTE_TYPE_DECIMAL = 4;
+  // Group of sub-attributes, see AttributeConstraints.sub_attributes.
   ATTRIBUTE_TYPE_COMPLEX = 6;
-  ATTRIBUTE_TYPE_REFERENCE = 7; // reference to an existing IdentifiedComplexValue
+  // Reference to an existing IdentifiedComplexValue.
+  ATTRIBUTE_TYPE_REFERENCE = 7;
+  // Image.
   ATTRIBUTE_TYPE_IMAGE = 8;
 
   // collection is a cardinality (rules.repeated.min_items / max_items), not a type
@@ -39,14 +58,22 @@ enum AttributeType {
 
 // Attribute is a key-value pair that can be used to filter the catalog
 message Attribute {
-  string id = 1; // id of the attribute
-  string name = 2; // name of the attribute
-  string description = 3; // description of the attribute
-  media.v1.Image icon = 4; // icon of the attribute
-  AttributeConstraints attribute_constraints = 5 [(buf.validate.field).required = true]; // constraints for the attribute
-  bool is_unique = 7; // whether the attribute is unique
-  bool is_visible = 8; // whether the attribute is visible to the user
-  bool is_active = 9; // whether the attribute is active
+  // Id of the attribute.
+  string id = 1;
+  // Name of the attribute.
+  string name = 2;
+  // Description of the attribute.
+  string description = 3;
+  // Icon of the attribute.
+  media.v1.Image icon = 4;
+  // Constraints for the attribute.
+  AttributeConstraints attribute_constraints = 5 [(buf.validate.field).required = true];
+  // Whether the attribute is unique.
+  bool is_unique = 7;
+  // Whether the attribute is visible to the user.
+  bool is_visible = 8;
+  // Whether the attribute is active.
+  bool is_active = 9;
 
   // replaced by AttributeConstraints.rules.required
   reserved 6;
@@ -98,12 +125,15 @@ message AttributeConstraints {
     expression: "(this.attribute_type == 6) == (size(this.sub_attributes) > 0)"
   };
 
+  // Type of the attribute.
   AttributeType attribute_type = 1 [(buf.validate.field).enum = {
     defined_only: true
     not_in: [0]
-  }]; // type of the attribute
-  buf.validate.FieldRules rules = 9; // rules for the attribute's values, see above
-  repeated Attribute sub_attributes = 10; // attributes of a COMPLEX attribute
+  }];
+  // Rules for the attribute's values, see above.
+  buf.validate.FieldRules rules = 9;
+  // Attributes of a COMPLEX attribute.
+  repeated Attribute sub_attributes = 10;
 
   // replaced by rules
   reserved 2 to 8;
@@ -113,37 +143,56 @@ message AttributeConstraints {
 // AttributeValue holds the values of an attribute; a single-valued attribute holds a list of one
 // the populated case must match the attribute's type, and the list must satisfy AttributeConstraints.rules
 message AttributeValue {
-  string attribute_id = 1 [(buf.validate.field).required = true]; // id of the attribute
+  // Id of the attribute.
+  string attribute_id = 1 [(buf.validate.field).required = true];
+  // Values of the attribute; the populated case must match the attribute's type.
   oneof values {
     option (buf.validate.oneof).required = true;
+    // Values of a TEXT attribute.
     collections.v1.StringCollection text_values = 2;
+    // Values of a NUMBER attribute.
     collections.v1.Int64Collection number_values = 3;
+    // Values of a DECIMAL attribute.
     collections.v1.DoubleCollection decimal_values = 4;
+    // Values of a BOOLEAN attribute.
     collections.v1.BoolCollection boolean_values = 5;
-    collections.v1.StringCollection reference_values = 6; // ids of existing IdentifiedComplexValues
+    // Ids of existing IdentifiedComplexValues.
+    collections.v1.StringCollection reference_values = 6;
+    // Values of an IMAGE attribute.
     media.v1.ImageCollection image_values = 7;
+    // Values of a COMPLEX attribute.
     ComplexCollection complex_values = 8;
   }
 }
 
 // ComplexValue is one instance of a complex attribute, with one AttributeValue per sub-attribute
 message ComplexValue {
-  repeated AttributeValue fields = 1; // values of the sub-attributes
+  // Values of the sub-attributes.
+  repeated AttributeValue fields = 1;
 }
 
+// A list of complex values.
 message ComplexCollection {
-  repeated ComplexValue values = 1; // values of the complex collection
+  // Values of the complex collection.
+  repeated ComplexValue values = 1;
 }
 
 // IdentifiedComplexValue is a complex value with an id which can be used for referencing the value across different items
 message IdentifiedComplexValue {
-  string id = 1; // id of the complex value
-  ComplexValue value = 2; // value of the complex value
+  // Id of the complex value.
+  string id = 1;
+  // Value of the complex value.
+  ComplexValue value = 2;
 }
 
+// A product, described by attribute definitions.
 message Product {
-  string id = 1; // id of the item template
-  string name = 2; // name of the product
-  string description = 3; // description of the product
-  repeated Attribute attributes = 4; // attributes of the product
+  // Id of the item template.
+  string id = 1;
+  // Name of the product.
+  string name = 2;
+  // Description of the product.
+  string description = 3;
+  // Attributes of the product.
+  repeated Attribute attributes = 4;
 }

@@ -6,7 +6,9 @@ import "buf/validate/validate.proto";
 import "google/protobuf/field_mask.proto";
 import "iam/v1/user.proto";
 
+// Request message for UserService.CreateUser.
 message CreateUserRequest {
+  // The user to create.
   User user = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -22,60 +24,90 @@ message CreateUserRequest {
   ];
 }
 
+// Response message for UserService.CreateUser.
 message CreateUserResponse {
+  // The created user.
   User user = 1;
 }
 
+// Request message for UserService.GetUser.
 message GetUserRequest {
+  // Id of the user to get.
   string id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for UserService.GetUser.
 message GetUserResponse {
+  // The requested user.
   User user = 1;
 }
 
 // roles cannot be updated here, use AssignRole / RemoveRole
 message UpdateUserRequest {
+  // The user to update. Its id identifies the user.
   User user = 1 [(buf.validate.field).required = true];
   // fields to update; if omitted, all fields set in user are updated (AIP-134)
   google.protobuf.FieldMask update_mask = 2;
 }
 
+// Response message for UserService.UpdateUser.
 message UpdateUserResponse {
+  // The updated user.
   User user = 1;
 }
 
+// Request message for UserService.DeleteUser.
 message DeleteUserRequest {
+  // Id of the user to delete.
   string id = 1 [(buf.validate.field).required = true];
 }
 
+// Response message for UserService.DeleteUser.
 message DeleteUserResponse {
+  // The deleted user.
   User user = 1;
 }
 
+// Request message for UserService.AssignRole.
 message AssignRoleRequest {
+  // Id of the user to assign the role to.
   string user_id = 1 [(buf.validate.field).required = true];
+  // Id of the role to assign.
   string role_id = 2 [(buf.validate.field).required = true];
 }
 
+// Response message for UserService.AssignRole.
 message AssignRoleResponse {
+  // The user with updated roles.
   User user = 1;
 }
 
+// Request message for UserService.RemoveRole.
 message RemoveRoleRequest {
+  // Id of the user to remove the role from.
   string user_id = 1 [(buf.validate.field).required = true];
+  // Id of the role to remove.
   string role_id = 2 [(buf.validate.field).required = true];
 }
 
+// Response message for UserService.RemoveRole.
 message RemoveRoleResponse {
+  // The user with updated roles.
   User user = 1;
 }
 
+// Manages users and their role assignments.
 service UserService {
+  // Creates a user.
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+  // Gets a user by id.
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
+  // Updates a user.
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
+  // Deletes a user and returns it.
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {} // marks the user as inactive
+  // Assigns a role to a user.
   rpc AssignRole(AssignRoleRequest) returns (AssignRoleResponse) {}
+  // Removes a role from a user.
   rpc RemoveRole(RemoveRoleRequest) returns (RemoveRoleResponse) {}
 }

@@ -4,19 +4,30 @@ package feed.v1;
 
 import "buf/validate/validate.proto";
 
+// Request message for FeedService.GetFeed.
 message GetFeedRequest {
+  // Id of the user whose feed to build.
   string user_id = 1 [(buf.validate.field).required = true];
+  // Tenant to build the feed in.
   string tenant = 2;
+  // Only entities of this type, e.g. Content. Optional.
   string entity_type = 3;
+  // Maximum number of results to return. The server applies a default and a maximum.
   int64 page_size = 4 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
   string page_token = 5;
 }
 
+// Response message for FeedService.GetFeed.
 message GetFeedResponse {
+  // ARNs of the entities in the feed, in display order.
   repeated string entity_arns = 1;
+  // Token for the next page. Empty when there are no more results.
   string next_page_token = 2;
 }
 
+// Builds personalized feeds of entities for a user.
 service FeedService {
+  // Gets a page of a user's feed.
   rpc GetFeed(GetFeedRequest) returns (GetFeedResponse) {}
 }

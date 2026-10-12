@@ -2,36 +2,61 @@ syntax = "proto3";
 
 package iam.v1;
 
+// An action a permission can allow on a resource.
 enum Action {
+  // Unspecified. Not a valid value.
   ACTION_UNSPECIFIED = 0;
 
+  // Read likes.
   ACTION_LIKE_READ = 1;
+  // Create likes.
   ACTION_LIKE_CREATE = 2;
+  // Delete likes.
   ACTION_LIKE_DELETE = 3;
 
+  // Read comments.
   ACTION_COMMENT_READ = 4;
+  // Create comments.
   ACTION_COMMENT_CREATE = 5;
+  // Delete comments.
   ACTION_COMMENT_DELETE = 6;
 
+  // Read dislikes.
   ACTION_DISLIKE_READ = 7;
+  // Create dislikes.
   ACTION_DISLIKE_CREATE = 8;
+  // Delete dislikes.
   ACTION_DISLIKE_DELETE = 9;
 
+  // Read follows.
   ACTION_FOLLOW_READ = 10;
+  // Create follows.
   ACTION_FOLLOW_CREATE = 11;
+  // Delete follows.
   ACTION_FOLLOW_DELETE = 12;
 
+  // Read content.
   ACTION_CONTENT_READ = 13;
+  // Create content.
   ACTION_CONTENT_CREATE = 14;
+  // Update content.
   ACTION_CONTENT_UPDATE = 15;
+  // Delete content.
   ACTION_CONTENT_DELETE = 16;
 
+  // Read users.
   ACTION_USER_READ = 17;
+  // Create users.
   ACTION_USER_CREATE = 18;
+  // Update users.
   ACTION_USER_UPDATE = 19;
+  // Delete users.
   ACTION_USER_DELETE = 20;
 
+  // Update comments.
   ACTION_COMMENT_UPDATE = 21;
+  // Flag comments.
   ACTION_COMMENT_FLAG = 22;
+  // Moderate comments.
   ACTION_COMMENT_MODERATE = 23;
 }

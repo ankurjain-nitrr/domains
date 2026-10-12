@@ -79,7 +79,7 @@ message UpdateBrandRequest {
 
 - If `update_mask` is omitted, update every field that is set on the resource in the request.
 - `update_mask` of `*` replaces the whole resource, clearing fields that are not set.
-- Fields owned by a dedicated RPC (e.g. `User.roles` via `AssignRole`, bank account status via
+- Fields owned by a dedicated RPC (e.g. `User.roles` via `AssignRole`, bank account state via
   `MarkBankAccountAs*`) are not updatable through the mask; document this on the request.
 - Skip the mask when it adds nothing: resources with a single editable field (e.g. `Comment.content`),
   and resources that should not be updated at all (e.g. posted ledger entries).

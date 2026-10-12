@@ -27,7 +27,12 @@ All domains must interoperate through entities and ARNs, not through knowledge o
 
 ## Checks
 
-- `buf format -w`, `buf lint` and `buf build` must be clean before committing; CI (`.github/workflows/buf.yml`) checks all three on pushes to main and on pull requests.
+- Run `make check` before committing; it runs everything CI (`.github/workflows/buf.yml`) runs: `buf format`,
+  `buf lint` (STANDARD + COMMENTS), Google `api-linter`, the `buf.lock` check, and generating and compiling Go and Java.
+- Every message, field, enum, value, oneof, service and RPC needs a leading `//` comment (not trailing).
+- `.api-linter.yaml` lists the AIP rules this repo deliberately doesn't follow, with reasons. For a one-off
+  exception, disable the rule inline on the element with an `aip.dev/not-precedent` reason.
+- Plugin versions are pinned in `buf.gen.yaml`; keep `build/go/go.mod` and `build/java/pom.xml` runtimes in step.
 
 ## Skills
 
