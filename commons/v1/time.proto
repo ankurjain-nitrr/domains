@@ -2,9 +2,11 @@ syntax = "proto3";
 
 package commons.v1;
 
+import "google/protobuf/timestamp.proto";
+
 // TimeRange represents a range of time with start and end epoch time
 message TimeRange {
-    int64 start_time = 1;
-    int64 end_time = 2;
+    google.protobuf.Timestamp start_time = 1;
+    google.protobuf.Timestamp end_time = 2;
 }
 

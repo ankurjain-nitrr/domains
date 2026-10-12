@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package iam.v1;
 
+import "google/protobuf/timestamp.proto";
+
 import "iam/v1/actions.proto";
 
 // permissions that allows roles to perform actions on a specific resource
@@ -21,8 +23,8 @@ message Permission {
     }
     string tenant = 7;
     bool is_active = 8;
-    string created_at = 9;
-    string updated_at = 10;
+    google.protobuf.Timestamp created_at = 9;
+    google.protobuf.Timestamp updated_at = 10;
 
     message Actions {
         repeated iam.v1.Action actions = 1;
@@ -34,8 +36,8 @@ message Role {
     string id = 1;
     string name = 2;
     string description = 3;
-    string created_at = 4;
-    string updated_at = 5;
+    google.protobuf.Timestamp created_at = 4;
+    google.protobuf.Timestamp updated_at = 5;
     repeated string permissions = 6; // references permission id from permission service
     string tenant = 7;
     bool is_active = 8;

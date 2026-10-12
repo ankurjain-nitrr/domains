@@ -33,7 +33,7 @@ message DeleteBrandRequest {
 }
 
 message DeleteBrandResponse {
-    bool success = 1;
+    brand.v1.Brand brand = 1;
 }
 
 service BrandService {

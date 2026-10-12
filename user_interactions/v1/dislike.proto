@@ -2,11 +2,13 @@ syntax = "proto3";
 
 package user_interactions.v1;
 
+import "google/protobuf/timestamp.proto";
+
 message Dislike {
     string id = 1;
     string user_id = 2;
     string entity_arn = 3; // tenent:entity_type:entity_id
-    int64 created_at = 4;
+    google.protobuf.Timestamp created_at = 4;
 }
 
 message DislikeRequest {
@@ -40,7 +42,7 @@ message ListDislikesRequest {
         FilterByUser filter_by_user = 1;
         FilterByEntity filter_by_entity = 2;
     }
-    string page_size = 3;
+    int64 page_size = 3;
     string page_token = 4;
 
     message FilterByUser {

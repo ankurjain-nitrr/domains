@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package content_management.v1;
 
+import "google/protobuf/timestamp.proto";
+
 import "media/v1/media.proto";
 
 // Content represents a piece of content with title, text, images, videos, and metadata
@@ -12,8 +14,8 @@ message Content {
     repeated media.v1.Image images = 4;
     repeated media.v1.Video videos = 5;
     string created_by = 6; // references user id from user management service
-    int64 created_at = 7;
+    google.protobuf.Timestamp created_at = 7;
     string updated_by = 8; // references user id from user management service // can be updated by moderators
-    int64 updated_at = 9;
+    google.protobuf.Timestamp updated_at = 9;
 }
 

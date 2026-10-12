@@ -35,7 +35,7 @@ message ListCommentsRequest {
         FilterByUser filter_by_user = 1;
         FilterByEntity filter_by_entity = 2;
     }
-    string page_size = 3;
+    int64 page_size = 3;
     string page_token = 4;
 
     // FilterByUser filters comments by user

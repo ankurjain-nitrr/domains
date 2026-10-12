@@ -2,12 +2,14 @@ syntax = "proto3";
 
 package user_interactions.v1;
 
+import "google/protobuf/timestamp.proto";
+
 // multi tenant like capabilites 
 // arn format references # movies can be liked by users
 message Like {
     string user_id = 1; // references id from iam service
     string entity_arn = 2; // tenent:entity_type:entity_id
-    int64 created_at = 3;
+    google.protobuf.Timestamp created_at = 3;
 }
 
 message LikeRequest {
@@ -43,7 +45,7 @@ message ListLikesRequest {
         FilterByUser filter_by_user = 1;
         FilterByEntity filter_by_entity = 2;
     }
-    string page_size = 3;
+    int64 page_size = 3;
     string page_token = 4;
 
     // list all likes by user or likes on specific entity, ensure pagination, uses oneof

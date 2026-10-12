@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package accounting.ledger.v1;
 
+import "google/protobuf/timestamp.proto";
+
 import "google/type/money.proto"; // Importing Google's Money type'
 
 message GeneralLedger {
@@ -9,8 +11,8 @@ message GeneralLedger {
     string tenant_id = 2; // tenant id
     string account_id = 3; // id of the account
     google.type.Money balance = 4; // balance of the general ledger
-    int64 created_at = 5; // created at timestamp
-    int64 updated_at = 6; // updated at timestamp
+    google.protobuf.Timestamp created_at = 5; // created at timestamp
+    google.protobuf.Timestamp updated_at = 6; // updated at timestamp
 }
 
 message GeneralLedgerEntry {
@@ -20,7 +22,7 @@ message GeneralLedgerEntry {
     GeneralLedgerType general_ledger_type = 4; // type of the general ledger
     EntryType entry_type = 5; // type of the entry
     google.type.Money amount = 6; // amount of the transaction
-    int64 entry_date = 7; // date of the transaction
+    google.protobuf.Timestamp entry_date = 7; // date of the transaction
     string description = 8; // description of the transaction
     string reference_id = 9; // reference id of the transaction
 }

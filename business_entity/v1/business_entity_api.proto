@@ -34,7 +34,7 @@ message DeleteBusinessEntityRequest {
 }
 
 message DeleteBusinessEntityResponse {
-    bool success = 1;
+    business_entity.v1.BusinessEntity business_entity = 1;
 }
 
 

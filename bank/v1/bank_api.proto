@@ -22,7 +22,7 @@ message GetBankAccountResponse {
 
 message ListBankAccountsRequest {
     BankAccountOwner owner = 1;
-    int32 page_size = 2;
+    int64 page_size = 2;
     string page_token = 3;
 }
 

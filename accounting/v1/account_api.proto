@@ -33,7 +33,7 @@ message DeleteAccountRequest {
 }
 
 message DeleteAccountResponse {
-    bool success = 1;
+    accounting.v1.Account account = 1;
 }
 
 service AccountService {
