@@ -1,0 +1,200 @@
+syntax = "proto3";
+
+package media.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "media/v1/media.proto";
+
+// Where the client sends the file bytes, with an HTTP PUT.
+message UploadTarget {
+  // Signed URL to PUT the file to. Works until expire_time.
+  string url = 1;
+  // Headers the PUT must carry, e.g. Content-Type.
+  map<string, string> headers = 2;
+  // Time the url stops accepting the upload.
+  google.protobuf.Timestamp expire_time = 3;
+}
+
+// Request message for MediaService.CreateMedia.
+message CreateMediaRequest {
+  // The media item to create. Set type, owner_id and source (mime_type, size_bytes, optionally filename); alt text
+  // and credit may be set on image or video. Everything else is set by the server.
+  Media media = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "media.type"
+      message: "type is required"
+      expression: "this.type != 0"
+    },
+    (buf.validate.field).cel = {
+      id: "media.owner_id"
+      message: "owner_id is required"
+      expression: "this.owner_id != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "media.source.mime_type"
+      message: "source.mime_type is required"
+      expression: "this.source.mime_type != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "media.source.size_bytes"
+      message: "source.size_bytes must be greater than 0"
+      expression: "this.source.size_bytes > 0"
+    },
+    (buf.validate.field).cel = {
+      id: "media.source.uri"
+      message: "source.uri is for ImportMedia"
+      expression: "this.source.uri == ''"
+    }
+  ];
+}
+
+// Response message for MediaService.CreateMedia.
+message CreateMediaResponse {
+  // The created media item, in STATE_UPLOAD_PENDING.
+  Media media = 1;
+  // Where to upload the file. Call CompleteUpload after the upload succeeds.
+  UploadTarget upload_target = 2;
+}
+
+// Request message for MediaService.CompleteUpload.
+message CompleteUploadRequest {
+  // Id of the media item whose file was uploaded.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for MediaService.CompleteUpload.
+message CompleteUploadResponse {
+  // The media item, in STATE_PROCESSING. Poll GetMedia until it is READY or FAILED.
+  Media media = 1;
+}
+
+// Request message for MediaService.ImportMedia.
+message ImportMediaRequest {
+  // The media item to import. Set type, owner_id and source.uri; alt text and credit may be set on image or video.
+  Media media = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "media.type"
+      message: "type is required"
+      expression: "this.type != 0"
+    },
+    (buf.validate.field).cel = {
+      id: "media.owner_id"
+      message: "owner_id is required"
+      expression: "this.owner_id != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "media.source.uri"
+      message: "source.uri is required"
+      expression: "this.source.uri != ''"
+    }
+  ];
+}
+
+// Response message for MediaService.ImportMedia.
+message ImportMediaResponse {
+  // The media item, in STATE_UPLOAD_PENDING while the file is fetched. Poll GetMedia until it is READY or FAILED.
+  Media media = 1;
+}
+
+// Request message for MediaService.GetMedia.
+message GetMediaRequest {
+  // Id of the media item to get.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for MediaService.GetMedia.
+message GetMediaResponse {
+  // The requested media item, with its ready renditions.
+  Media media = 1;
+}
+
+// get several media items in one call, e.g. for rendering a feed
+message BatchGetMediaRequest {
+  // Ids of the media items to get.
+  repeated string ids = 1 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 100
+    unique: true
+  }];
+}
+
+// Response message for MediaService.BatchGetMedia.
+message BatchGetMediaResponse {
+  // The media items, with their ready renditions, in the order requested. Fails with NOT_FOUND if any is missing.
+  repeated Media media = 1;
+}
+
+// Request message for MediaService.UpdateMedia.
+message UpdateMediaRequest {
+  // The media item to update. Its id identifies it.
+  Media media = 1 [(buf.validate.field).required = true];
+  // fields to update; if omitted, all editable fields set in media are updated (AIP-134)
+  //
+  // Editable: image.alt_text, image.credit, video.alt_text and video.credit. Everything else is set by the server.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Response message for MediaService.UpdateMedia.
+message UpdateMediaResponse {
+  // The updated media item.
+  Media media = 1;
+}
+
+// Request message for MediaService.DeleteMedia.
+message DeleteMediaRequest {
+  // Id of the media item to delete.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for MediaService.DeleteMedia.
+message DeleteMediaResponse {
+  // The deleted media item.
+  Media media = 1;
+}
+
+// Request message for MediaService.ListMedia.
+message ListMediaRequest {
+  // Only media uploaded by this user, references iam.
+  string owner_id = 1;
+  // Only media of this type.
+  MediaType type = 2 [(buf.validate.field).enum.defined_only = true];
+  // Maximum number of results to return. The server applies a default and a maximum.
+  int64 page_size = 3 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
+  string page_token = 4;
+}
+
+// Response message for MediaService.ListMedia.
+message ListMediaResponse {
+  // The media items on this page, newest first.
+  repeated Media media = 1;
+  // Token for the next page. Empty when there are no more results.
+  string next_page_token = 2;
+}
+
+// Uploads, imports and manages images and videos. Sizes are managed by RenditionService.
+//
+// Upload flow: CreateMedia returns a signed URL; the client PUTs the file there and calls CompleteUpload; the media
+// item moves to PROCESSING, then READY or FAILED. ImportMedia fetches the file from a URL instead.
+service MediaService {
+  // Creates a media item and returns where to upload its file.
+  rpc CreateMedia(CreateMediaRequest) returns (CreateMediaResponse) {}
+  // Marks a media item's upload as complete and starts processing it.
+  rpc CompleteUpload(CompleteUploadRequest) returns (CompleteUploadResponse) {}
+  // Creates a media item from a file at a URL, e.g. a news wire photo.
+  rpc ImportMedia(ImportMediaRequest) returns (ImportMediaResponse) {}
+  // Gets a media item by id.
+  rpc GetMedia(GetMediaRequest) returns (GetMediaResponse) {}
+  // Gets several media items by id in one call.
+  rpc BatchGetMedia(BatchGetMediaRequest) returns (BatchGetMediaResponse) {}
+  // Updates a media item's alt text or credit.
+  rpc UpdateMedia(UpdateMediaRequest) returns (UpdateMediaResponse) {}
+  // Deletes a media item and its renditions and returns it. Snapshots embedded elsewhere stop resolving.
+  rpc DeleteMedia(DeleteMediaRequest) returns (DeleteMediaResponse) {}
+  // Lists media items, a page at a time.
+  rpc ListMedia(ListMediaRequest) returns (ListMediaResponse) {}
+}

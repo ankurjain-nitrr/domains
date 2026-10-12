@@ -24,6 +24,8 @@
     - core::0135::request-name-required
     - core::0135::request-unknown-fields
     - core::0135::response-message-name
+    - core::0231::request-names-field
+    - core::0231::request-unknown-fields
 
     # Only multi-field updates take an update_mask (see "Update" in docs/api-conventions.md).
     - core::0134::request-mask-required

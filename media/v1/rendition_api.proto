@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package media.v1;
+
+import "buf/validate/validate.proto";
+import "media/v1/media.proto";
+
+// Request message for RenditionService.CreateRenditionPreset.
+message CreateRenditionPresetRequest {
+  // The preset to create. Its id is chosen by the caller.
+  RenditionPreset rendition_preset = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "rendition_preset.id"
+      message: "id is required"
+      expression: "this.id != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "rendition_preset.media_type"
+      message: "media_type is required"
+      expression: "this.media_type != 0"
+    },
+    (buf.validate.field).cel = {
+      id: "rendition_preset.spec"
+      message: "spec is required"
+      expression: "has(this.spec)"
+    },
+    (buf.validate.field).cel = {
+      id: "rendition_preset.image_format"
+      message: "image presets need an image format"
+      expression: "this.media_type != 1 || this.spec.format != 4"
+    }
+  ];
+}
+
+// Response message for RenditionService.CreateRenditionPreset.
+message CreateRenditionPresetResponse {
+  // The created preset.
+  RenditionPreset rendition_preset = 1;
+}
+
+// Request message for RenditionService.GetRenditionPreset.
+message GetRenditionPresetRequest {
+  // Id of the preset to get.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for RenditionService.GetRenditionPreset.
+message GetRenditionPresetResponse {
+  // The requested preset.
+  RenditionPreset rendition_preset = 1;
+}
+
+// Request message for RenditionService.ListRenditionPresets.
+message ListRenditionPresetsRequest {
+  // Only presets for this type of media.
+  MediaType media_type = 1 [(buf.validate.field).enum.defined_only = true];
+  // Maximum number of results to return. The server applies a default and a maximum.
+  int64 page_size = 2 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
+  string page_token = 3;
+}
+
+// Response message for RenditionService.ListRenditionPresets.
+message ListRenditionPresetsResponse {
+  // The presets on this page.
+  repeated RenditionPreset rendition_presets = 1;
+  // Token for the next page. Empty when there are no more results.
+  string next_page_token = 2;
+}
+
+// Request message for RenditionService.DeleteRenditionPreset.
+message DeleteRenditionPresetRequest {
+  // Id of the preset to delete.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for RenditionService.DeleteRenditionPreset.
+message DeleteRenditionPresetResponse {
+  // The deleted preset.
+  RenditionPreset rendition_preset = 1;
+}
+
+// Request message for RenditionService.GenerateRendition.
+message GenerateRenditionRequest {
+  // Id of the media item, which must be READY.
+  string media_id = 1 [(buf.validate.field).required = true];
+  // Id of the preset to generate. Must apply to the media item's type.
+  string preset_id = 2 [(buf.validate.field).required = true];
+}
+
+// Response message for RenditionService.GenerateRendition.
+message GenerateRenditionResponse {
+  // The rendition, usually in STATE_PROCESSING; the existing one if it was already generated.
+  Rendition rendition = 1;
+}
+
+// Request message for RenditionService.ListRenditions.
+message ListRenditionsRequest {
+  // Id of the media item.
+  string media_id = 1 [(buf.validate.field).required = true];
+  // Maximum number of results to return. The server applies a default and a maximum.
+  int64 page_size = 2 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
+  string page_token = 3;
+}
+
+// Response message for RenditionService.ListRenditions.
+message ListRenditionsResponse {
+  // The renditions on this page, in any state, smallest first.
+  repeated Rendition renditions = 1;
+  // Token for the next page. Empty when there are no more results.
+  string next_page_token = 2;
+}
+
+// Manages the sizes media is served at. Presets name the sizes; renditions are the generated files.
+//
+// To show media at a size: list the presets to see what sizes exist, read the media item's renditions (or
+// ListRenditions to include ones still processing), and call GenerateRendition for a non-eager preset it doesn't
+// have yet.
+service RenditionService {
+  // Creates a preset. Eager presets apply to media created afterwards.
+  rpc CreateRenditionPreset(CreateRenditionPresetRequest) returns (CreateRenditionPresetResponse) {}
+  // Gets a preset by id.
+  rpc GetRenditionPreset(GetRenditionPresetRequest) returns (GetRenditionPresetResponse) {}
+  // Lists presets, a page at a time.
+  rpc ListRenditionPresets(ListRenditionPresetsRequest) returns (ListRenditionPresetsResponse) {}
+  // Deletes a preset and its renditions and returns it.
+  rpc DeleteRenditionPreset(DeleteRenditionPresetRequest) returns (DeleteRenditionPresetResponse) {}
+  // Generates a media item's rendition for a preset. Idempotent.
+  rpc GenerateRendition(GenerateRenditionRequest) returns (GenerateRenditionResponse) {}
+  // Lists a media item's renditions, a page at a time.
+  rpc ListRenditions(ListRenditionsRequest) returns (ListRenditionsResponse) {}
+}
