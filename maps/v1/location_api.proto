@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+package maps.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/field_mask.proto";
+import "maps/v1/location.proto";
+import "validation/v1/rules.proto";
+
+// Request message for LocationService.CreateLocation.
+message CreateLocationRequest {
+  // The location to create.
+  Location location = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "location.owner_arn"
+      message: "owner_arn is required"
+      expression: "this.owner_arn != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "location.address_location"
+      message: "address.location is required"
+      expression: "has(this.address.location)"
+    }
+  ];
+}
+
+// Response message for LocationService.CreateLocation.
+message CreateLocationResponse {
+  // The created location.
+  Location location = 1;
+}
+
+// Request message for LocationService.GetLocation.
+message GetLocationRequest {
+  // Id of the location to get.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for LocationService.GetLocation.
+message GetLocationResponse {
+  // The requested location.
+  Location location = 1;
+}
+
+// Request message for LocationService.UpdateLocation.
+message UpdateLocationRequest {
+  // The location to update. Its id identifies the location.
+  Location location = 1 [(buf.validate.field).required = true];
+  // fields to update; if omitted, all fields set in location are updated (AIP-134)
+  //
+  // Only label and address are updated.
+  google.protobuf.FieldMask update_mask = 2 [(buf.validate.field).cel = {
+    id: "update_location.update_mask"
+    message: "only label and address can be updated"
+    expression: "this.paths.all(p, p == 'label' || p == 'address' || p.startsWith('address.'))"
+  }];
+}
+
+// Response message for LocationService.UpdateLocation.
+message UpdateLocationResponse {
+  // The updated location.
+  Location location = 1;
+}
+
+// Request message for LocationService.DeleteLocation.
+message DeleteLocationRequest {
+  // Id of the location to delete.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for LocationService.DeleteLocation.
+message DeleteLocationResponse {
+  // The deleted location.
+  Location location = 1;
+}
+
+// list a user's saved addresses, or the outlets near a point, e.g. restaurants that deliver to it
+message ListLocationsRequest {
+  option (buf.validate.message).cel = {
+    id: "list_locations.filter"
+    message: "set owner_arn, near or both"
+    expression: "this.owner_arn != '' || has(this.near)"
+  };
+  // Only locations of this entity.
+  string owner_arn = 1 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ];
+  // Only locations inside this circle, nearest first.
+  Circle near = 2;
+  // Maximum number of results to return. The server applies a default and a maximum.
+  int64 page_size = 3 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
+  string page_token = 4;
+}
+
+// Response message for LocationService.ListLocations.
+message ListLocationsResponse {
+  // The locations on this page; nearest first when near is set, otherwise newest first.
+  repeated Location locations = 1;
+  // Token for the next page. Empty when there are no more results.
+  string next_page_token = 2;
+}
+
+// Manages saved locations of any entity.
+service LocationService {
+  // Creates a location.
+  rpc CreateLocation(CreateLocationRequest) returns (CreateLocationResponse) {}
+  // Gets a location by id.
+  rpc GetLocation(GetLocationRequest) returns (GetLocationResponse) {}
+  // Updates a location.
+  rpc UpdateLocation(UpdateLocationRequest) returns (UpdateLocationResponse) {}
+  // Deletes a location and returns it.
+  rpc DeleteLocation(DeleteLocationRequest) returns (DeleteLocationResponse) {}
+  // Lists locations by owner or near a point, a page at a time.
+  rpc ListLocations(ListLocationsRequest) returns (ListLocationsResponse) {}
+}

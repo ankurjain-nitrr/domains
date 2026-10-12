@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+package maps.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "google/type/latlng.proto";
+import "maps/v1/location.proto";
+
+// How a trip is travelled.
+enum TravelMode {
+  // Unspecified. Treated as DRIVE.
+  TRAVEL_MODE_UNSPECIFIED = 0;
+  // Car or cab.
+  TRAVEL_MODE_DRIVE = 1;
+  // Motorcycle or scooter, e.g. a delivery partner or a bike taxi.
+  TRAVEL_MODE_TWO_WHEELER = 2;
+  // On foot.
+  TRAVEL_MODE_WALK = 3;
+}
+
+// Request message for MapsService.AutocompletePlaces.
+message AutocompletePlacesRequest {
+  // Text typed so far.
+  string input = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 200
+  }];
+  // Random UUID shared by the autocomplete requests and the GetPlace call of one search, for provider billing.
+  string session_token = 2 [(buf.validate.field).string.uuid = true];
+  // Prefer places in this circle, e.g. around the user.
+  Circle location_bias = 3;
+  // Only places in this CLDR region. Empty means IN.
+  string region_code = 4 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = "^[A-Z]{2}$"
+  ];
+}
+
+// A place suggested while typing.
+message PlaceSuggestion {
+  // Provider's place id, for GetPlace.
+  string place_id = 1;
+  // Main text, e.g. the building or business name.
+  string primary_text = 2;
+  // Rest of the address, e.g. area and city.
+  string secondary_text = 3;
+  // Straight-line distance from the location_bias centre, if set.
+  double distance_meters = 4;
+}
+
+// Response message for MapsService.AutocompletePlaces.
+message AutocompletePlacesResponse {
+  // Suggestions, best first.
+  repeated PlaceSuggestion suggestions = 1;
+}
+
+// Request message for MapsService.GetPlace.
+message GetPlaceRequest {
+  // Place id from a suggestion.
+  string place_id = 1 [(buf.validate.field).required = true];
+  // Session token of the autocomplete requests that found it. Ends the session.
+  string session_token = 2 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.uuid = true
+  ];
+}
+
+// Response message for MapsService.GetPlace.
+message GetPlaceResponse {
+  // Address of the place, with its location and place_id.
+  Address address = 1;
+}
+
+// Request message for MapsService.ReverseGeocode.
+message ReverseGeocodeRequest {
+  // Point to look up, e.g. a dropped pin or the device location.
+  google.type.LatLng location = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for MapsService.ReverseGeocode.
+message ReverseGeocodeResponse {
+  // Addresses at or near the point, most precise first, each with its location.
+  repeated Address addresses = 1;
+}
+
+// Request message for MapsService.ComputeDistanceMatrix.
+message ComputeDistanceMatrixRequest {
+  // Start points, e.g. a pickup or nearby drivers.
+  repeated google.type.LatLng origins = 1 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 25
+  }];
+  // End points, e.g. a drop or delivery address.
+  repeated google.type.LatLng destinations = 2 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 25
+  }];
+  // How the trips are travelled.
+  TravelMode travel_mode = 3 [(buf.validate.field).enum.defined_only = true];
+  // Departure time, for traffic-aware durations. Unset means now.
+  google.protobuf.Timestamp departure_time = 4;
+}
+
+// Distance and duration from one origin to one destination.
+message DistanceMatrixElement {
+  // Index into origins.
+  int32 origin_index = 1;
+  // Index into destinations.
+  int32 destination_index = 2;
+  // Whether a route was found. Distance and duration are set only if it was.
+  bool route_found = 3;
+  // Road distance in metres.
+  int64 distance_meters = 4;
+  // Travel time, with traffic at departure_time.
+  google.protobuf.Duration duration = 5;
+}
+
+// Response message for MapsService.ComputeDistanceMatrix.
+message ComputeDistanceMatrixResponse {
+  // One element per origin and destination pair.
+  repeated DistanceMatrixElement elements = 1;
+}
+
+// Map lookups backed by a map provider: address search, pin to address, and travel distance and time.
+service MapsService {
+  // Suggests places as the user types an address, pickup or drop.
+  rpc AutocompletePlaces(AutocompletePlacesRequest) returns (AutocompletePlacesResponse) {}
+  // Gets the address and location of a suggested place.
+  rpc GetPlace(GetPlaceRequest) returns (GetPlaceResponse) {}
+  // Gets the addresses at a point, e.g. a dropped pin.
+  rpc ReverseGeocode(ReverseGeocodeRequest) returns (ReverseGeocodeResponse) {}
+  // Computes travel distance and time between points, e.g. for ETAs, fares and the nearest driver.
+  rpc ComputeDistanceMatrix(ComputeDistanceMatrixRequest) returns (ComputeDistanceMatrixResponse) {}
+}

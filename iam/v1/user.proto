@@ -3,9 +3,9 @@ syntax = "proto3";
 package iam.v1;
 
 import "buf/validate/validate.proto";
-import "commons/v1/address.proto";
 import "commons/v1/phone.proto";
 import "google/protobuf/timestamp.proto";
+import "maps/v1/location.proto";
 import "validation/v1/rules.proto";
 
 // A user of the platform.
@@ -24,7 +24,7 @@ message User {
   // Phone numbers of the user.
   repeated commons.v1.Phone phones = 5;
   // Residential address of the user.
-  commons.v1.Address residential_addresses = 6;
+  maps.v1.Address residential_address = 6;
   // Identity documents of the user.
   KycDetails kyc_details = 7;
   // Time the user was created. Output only.

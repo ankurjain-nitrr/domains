@@ -1,0 +1,70 @@
+// Addresses and places, India first: what accounting (billing and registered addresses, GST place of supply),
+// delivery (saved addresses, nearby stores, ETAs) and ride hailing (pickup and drop, fares) need. Lookups follow
+// Google Maps Platform (Places, Geocoding, Routes) so a server can use it or another provider.
+syntax = "proto3";
+
+package maps.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "google/type/latlng.proto";
+import "validation/v1/rules.proto";
+
+// A postal address with an optional map point.
+message Address {
+  // Lines before the city, most specific first, e.g. flat and building, street, area.
+  repeated string address_lines = 1 [(buf.validate.field).repeated.max_items = 3];
+  // Nearby landmark, common in Indian addresses, e.g. "Opp. City Mall".
+  string landmark = 2;
+  // City, town or village.
+  string city = 3;
+  // ISO 3166-2 code of the state or union territory, e.g. IN-KA. Decides GST place of supply.
+  string state_code = 4 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = "^[A-Z]{2}-[A-Z0-9]{1,3}$"
+  ];
+  // 6-digit postal code (PIN code).
+  string pincode = 5 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.pincode) = true
+  ];
+  // CLDR region code of the country, e.g. IN.
+  string region_code = 6 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = "^[A-Z]{2}$"
+  ];
+  // Map point, e.g. the pin a user dropped for delivery or pickup.
+  google.type.LatLng location = 7;
+  // Map provider's place id, when the address came from a place lookup.
+  string place_id = 8;
+}
+
+// A circle on the map.
+message Circle {
+  // Centre of the circle.
+  google.type.LatLng center = 1 [(buf.validate.field).required = true];
+  // Radius in metres, up to 50 km.
+  double radius_meters = 2 [(buf.validate.field).double = {
+    gt: 0
+    lte: 50000
+  }];
+}
+
+// A saved, labelled address of any entity: a user's Home, a restaurant's outlet, a warehouse.
+message Location {
+  // Unique identifier of the location.
+  string id = 1;
+  // Entity the location belongs to, e.g. shop:User:u_1 or shop:BusinessEntity:b_1.
+  string owner_arn = 2 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ];
+  // Label shown to the owner, e.g. Home, Work.
+  string label = 3 [(buf.validate.field).string.max_len = 50];
+  // The address, with its map point.
+  Address address = 4;
+  // Time the location was created. Output only.
+  google.protobuf.Timestamp create_time = 5;
+  // Time the location was last updated. Output only.
+  google.protobuf.Timestamp update_time = 6;
+}

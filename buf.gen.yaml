@@ -1,29 +1,27 @@
-version: v1
+version: v2
 managed:
   enabled: true
-  java_multiple_files: true
-  java_package_prefix:
-    default: "com.domains"
-    # dependencies keep their own published packages
-    except:
-      - buf.build/googleapis/googleapis
-      - buf.build/bufbuild/protovalidate
-  go_package_prefix:
-    default: "github.com/ankurjain-nitrr/domains/gen/proto/go"
-    # dependencies keep their own published packages
-    except:
-      - buf.build/googleapis/googleapis
-      - buf.build/bufbuild/protovalidate
+  # dependencies keep their own published packages and class names, matching their prebuilt runtime artifacts
+  disable:
+    - module: buf.build/googleapis/googleapis
+    - module: buf.build/bufbuild/protovalidate
+  override:
+    - file_option: java_multiple_files
+      value: true
+    - file_option: java_package_prefix
+      value: com.domains
+    - file_option: go_package_prefix
+      value: github.com/ankurjain-nitrr/domains/gen/proto/go
 # Remote plugins run on the Buf Schema Registry, so local and CI generation use the same pinned versions with
 # nothing to install. Keep the runtime versions in build/go/go.mod and build/java/pom.xml in step with these.
 plugins:
-  - plugin: buf.build/protocolbuffers/go:v1.36.12
+  - remote: buf.build/protocolbuffers/go:v1.36.12
     out: gen/proto/go
     opt: paths=source_relative
-  - plugin: buf.build/grpc/go:v1.6.2
+  - remote: buf.build/grpc/go:v1.6.2
     out: gen/proto/go
     opt: paths=source_relative
-  - plugin: buf.build/protocolbuffers/java:v36.2
+  - remote: buf.build/protocolbuffers/java:v36.2
     out: gen/proto/java
-  - plugin: buf.build/grpc/java:v1.84.1
+  - remote: buf.build/grpc/java:v1.84.1
     out: gen/proto/java

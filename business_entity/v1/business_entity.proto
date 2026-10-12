@@ -3,9 +3,9 @@ syntax = "proto3";
 package business_entity.v1;
 
 import "buf/validate/validate.proto";
-import "commons/v1/address.proto";
 import "commons/v1/phone.proto";
 import "google/protobuf/timestamp.proto";
+import "maps/v1/location.proto";
 import "validation/v1/rules.proto";
 
 // Business entity as per indian laws and regulations
@@ -37,7 +37,7 @@ message BusinessEntity {
     (buf.validate.field).string.(validation.v1.cin) = true
   ];
   // Registered office address.
-  commons.v1.Address registered_address = 7;
+  maps.v1.Address registered_address = 7;
   // Directors of the entity.
   repeated Director directors = 8;
   // Contact email of the entity.
