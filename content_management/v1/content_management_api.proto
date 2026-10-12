@@ -21,6 +21,11 @@ message CreateContentRequest {
       id: "content.title_or_text"
       message: "title or text is required"
       expression: "this.title != '' || this.text != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "content.draft_on_create"
+      message: "content is created as a draft: leave state unset or DRAFT, and publish_time unset"
+      expression: "this.state in [0, 1] && !has(this.publish_time)"
     }
   ];
 }
@@ -49,8 +54,13 @@ message UpdateContentRequest {
   content_management.v1.Content content = 1 [(buf.validate.field).required = true];
   // fields to update; if omitted, all fields set in content are updated (AIP-134)
   //
-  // state and publish_time are not updatable here; use PublishContent and ArchiveContent.
-  google.protobuf.FieldMask update_mask = 2;
+  // state and publish_time are never updated here, including with a mask of * or no mask; use PublishContent and
+  // ArchiveContent.
+  google.protobuf.FieldMask update_mask = 2 [(buf.validate.field).cel = {
+    id: "update_content.update_mask"
+    message: "state and publish_time can't be updated; use PublishContent or ArchiveContent"
+    expression: "!this.paths.exists(p, p in ['state', 'publish_time'])"
+  }];
 }
 
 // Response message for ContentManagementService.UpdateContent.
@@ -75,7 +85,7 @@ message DeleteContentResponse {
 message ListContentRequest {
   // Id of the user who created the content.
   string creator = 1;
-  // Optional time window on creation or last update.
+  // Optional time window on creation, last update or first publish.
   oneof time_range {
     // Only content created in this range.
     commons.v1.TimeRange create_time_range = 2;
@@ -104,6 +114,8 @@ message ListContentResponse {
 message PublishContentRequest {
   // Id of the content to publish.
   string id = 1 [(buf.validate.field).required = true];
+  // Id of the user publishing it (the creator or a moderator), references iam. Recorded as Content.updater.
+  string updater = 2 [(buf.validate.field).required = true];
 }
 
 // Response message for ContentManagementService.PublishContent.
@@ -116,6 +128,8 @@ message PublishContentResponse {
 message ArchiveContentRequest {
   // Id of the content to archive.
   string id = 1 [(buf.validate.field).required = true];
+  // Id of the user archiving it (the creator or a moderator), references iam. Recorded as Content.updater.
+  string updater = 2 [(buf.validate.field).required = true];
 }
 
 // Response message for ContentManagementService.ArchiveContent.
@@ -125,6 +139,9 @@ message ArchiveContentResponse {
 }
 
 // Manages user-created content such as posts.
+//
+// Drafts and archived content are returned by GetContent and ListContent only to their creator, identified by the
+// authenticated caller; others get NOT_FOUND or don't see them.
 service ContentManagementService {
   // Creates content.
   rpc CreateContent(CreateContentRequest) returns (CreateContentResponse) {}
