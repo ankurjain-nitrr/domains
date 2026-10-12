@@ -27,7 +27,7 @@ message CreateContentRequest {
 
 // Response message for ContentManagementService.CreateContent.
 message CreateContentResponse {
-  // The created content.
+  // The created content, in STATE_DRAFT.
   content_management.v1.Content content = 1;
 }
 
@@ -48,6 +48,8 @@ message UpdateContentRequest {
   // The content to update. Its id identifies the content.
   content_management.v1.Content content = 1 [(buf.validate.field).required = true];
   // fields to update; if omitted, all fields set in content are updated (AIP-134)
+  //
+  // state and publish_time are not updatable here; use PublishContent and ArchiveContent.
   google.protobuf.FieldMask update_mask = 2;
 }
 
@@ -79,7 +81,11 @@ message ListContentRequest {
     commons.v1.TimeRange create_time_range = 2;
     // Only content last updated in this range.
     commons.v1.TimeRange update_time_range = 3;
+    // Only content first published in this range.
+    commons.v1.TimeRange publish_time_range = 6;
   }
+  // Only content in this state, e.g. a creator's drafts.
+  content_management.v1.Content.State state = 7 [(buf.validate.field).enum.defined_only = true];
   // Maximum number of results to return. The server applies a default and a maximum.
   int64 page_size = 4 [(buf.validate.field).int64.gte = 0];
   // Page token from a previous response's next_page_token. Empty for the first page.
@@ -94,6 +100,30 @@ message ListContentResponse {
   string next_page_token = 2;
 }
 
+// Request message for ContentManagementService.PublishContent.
+message PublishContentRequest {
+  // Id of the content to publish.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for ContentManagementService.PublishContent.
+message PublishContentResponse {
+  // The published content.
+  content_management.v1.Content content = 1;
+}
+
+// Request message for ContentManagementService.ArchiveContent.
+message ArchiveContentRequest {
+  // Id of the content to archive.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for ContentManagementService.ArchiveContent.
+message ArchiveContentResponse {
+  // The archived content.
+  content_management.v1.Content content = 1;
+}
+
 // Manages user-created content such as posts.
 service ContentManagementService {
   // Creates content.
@@ -106,4 +136,9 @@ service ContentManagementService {
   rpc DeleteContent(DeleteContentRequest) returns (DeleteContentResponse) {}
   // Lists content, a page at a time.
   rpc ListContent(ListContentRequest) returns (ListContentResponse) {}
+  // Publishes draft or archived content. Fails with FAILED_PRECONDITION if it is already published.
+  rpc PublishContent(PublishContentRequest) returns (PublishContentResponse) {}
+  // Archives draft or published content, hiding it from others. Fails with FAILED_PRECONDITION if it is already
+  // archived.
+  rpc ArchiveContent(ArchiveContentRequest) returns (ArchiveContentResponse) {}
 }
