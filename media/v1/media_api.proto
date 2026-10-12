@@ -47,6 +47,13 @@ message CreateMediaRequest {
       id: "media.source.uri"
       message: "source.uri is for ImportMedia"
       expression: "this.source.uri == ''"
+    },
+    (buf.validate.field).cel = {
+      id: "media.source.mime_type_matches_type"
+      message: "source.mime_type must be image/* for an image, or video/* or image/gif for a video"
+      expression:
+        "(this.type != 1 || this.source.mime_type.matches('(?i)^image/'))"
+        " && (this.type != 2 || this.source.mime_type.matches('(?i)^(video/|image/gif$)'))"
     }
   ];
 }
@@ -55,7 +62,8 @@ message CreateMediaRequest {
 message CreateMediaResponse {
   // The created media item, in STATE_UPLOAD_PENDING.
   Media media = 1;
-  // Where to upload the file. Call CompleteUpload after the upload succeeds.
+  // Where to upload the file. Call CompleteUpload after the upload succeeds. A media item still UPLOAD_PENDING
+  // after upload_target.expire_time is deleted; call CreateMedia again.
   UploadTarget upload_target = 2;
 }
 
@@ -119,6 +127,9 @@ message BatchGetMediaRequest {
     min_items: 1
     max_items: 100
     unique: true
+    items: {
+      string: {min_len: 1}
+    }
   }];
 }
 
@@ -131,11 +142,22 @@ message BatchGetMediaResponse {
 // Request message for MediaService.UpdateMedia.
 message UpdateMediaRequest {
   // The media item to update. Its id identifies it.
-  Media media = 1 [(buf.validate.field).required = true];
+  Media media = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "media.id"
+      message: "id is required"
+      expression: "this.id != ''"
+    }
+  ];
   // fields to update; if omitted, all editable fields set in media are updated (AIP-134)
   //
   // Editable: image.alt_text, image.credit, video.alt_text and video.credit. Everything else is set by the server.
-  google.protobuf.FieldMask update_mask = 2;
+  google.protobuf.FieldMask update_mask = 2 [(buf.validate.field).cel = {
+    id: "update_media.update_mask"
+    message: "only image.alt_text, image.credit, video.alt_text and video.credit can be updated"
+    expression: "this.paths.all(p, p in ['image.alt_text', 'image.credit', 'video.alt_text', 'video.credit'])"
+  }];
 }
 
 // Response message for MediaService.UpdateMedia.

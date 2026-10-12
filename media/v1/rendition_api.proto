@@ -28,7 +28,7 @@ message CreateRenditionPresetRequest {
     (buf.validate.field).cel = {
       id: "rendition_preset.image_format"
       message: "image presets need an image format"
-      expression: "this.media_type != 1 || this.spec.format != 4"
+      expression: "this.media_type != 1 || this.spec.format in [0, 1, 2, 3]"
     }
   ];
 }
@@ -91,7 +91,8 @@ message GenerateRenditionRequest {
 
 // Response message for RenditionService.GenerateRendition.
 message GenerateRenditionResponse {
-  // The rendition, usually in STATE_PROCESSING; the existing one if it was already generated.
+  // The rendition, in STATE_PROCESSING; or the existing one if it is PROCESSING or READY. A FAILED rendition is
+  // generated again.
   Rendition rendition = 1;
 }
 
@@ -127,7 +128,8 @@ service RenditionService {
   rpc ListRenditionPresets(ListRenditionPresetsRequest) returns (ListRenditionPresetsResponse) {}
   // Deletes a preset and its renditions and returns it.
   rpc DeleteRenditionPreset(DeleteRenditionPresetRequest) returns (DeleteRenditionPresetResponse) {}
-  // Generates a media item's rendition for a preset. Idempotent.
+  // Generates a media item's rendition for a preset. Returns the existing rendition unless it FAILED, which is
+  // retried.
   rpc GenerateRendition(GenerateRenditionRequest) returns (GenerateRenditionResponse) {}
   // Lists a media item's renditions, a page at a time.
   rpc ListRenditions(ListRenditionsRequest) returns (ListRenditionsResponse) {}
