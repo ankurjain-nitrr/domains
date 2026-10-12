@@ -23,8 +23,10 @@ all: clean check
 init: check_os check_brew check_go check_java install-buf install-maven install-api-linter
 	@echo "Initialization complete."
 
-# Generate Go and Java code with the pinned remote plugins in buf.gen.yaml
+# Generate Go and Java code with the pinned remote plugins in buf.gen.yaml. Clears the previous output first,
+# so code for removed messages doesn't linger and break compilation.
 generate: check_buf
+	@rm -rf $(GEN_DIR)/proto
 	@buf generate
 
 # buf lint: STANDARD and COMMENTS rules, including protovalidate rule checks
