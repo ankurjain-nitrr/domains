@@ -11,6 +11,20 @@ Built with `buf` (see `Makefile`, `buf.yaml`); generated code goes to `gen/` and
   protovalidate annotations, using the shared rules in `validation/v1/rules.proto`.
 - For anything not covered there, follow the Google API Improvement Proposals: https://google.aip.dev/
 
+## Interoperability
+
+All domains must interoperate through entities and ARNs, not through knowledge of each other's types.
+
+- An entity is any resource a domain owns (`Product`, `Content`, `Brand`, `User`, ...). Its ARN is
+  `tenant:entity_type:entity_id`, where `entity_type` is the resource's message name, e.g. `shop:Product:p_123`.
+  Validate ARN fields with `(buf.validate.field).string.(validation.v1.entity_arn) = true`.
+- Generic capabilities (likes, dislikes, follows, comments, feed, permissions) take an `entity_arn` and must accept
+  any entity type. A like works on a `Product` exactly as on a social `Content` post. Never couple them to one
+  domain: no `post_id` fields, no `LikeProduct` RPCs, no imports of another domain's resource messages.
+- Use an ARN wherever a field can point at more than one entity type; use a plain `<entity>_id` only when the type
+  is fixed (e.g. `user_id` of the acting user).
+- Behavior specific to an entity type belongs to the domain that owns that entity, not to the generic capability.
+
 ## Checks
 
 - `buf format -w`, `buf lint` and `buf build` must be clean before committing; CI (`.github/workflows/buf.yml`) checks all three on pushes to main and on pull requests.
