@@ -1,12 +1,236 @@
+// Images and videos that any domain can attach to its entities: posts, short videos, news articles, product and
+// category images, logos. See docs/media.md for scope and flows.
+//
+// Media is the owned resource (ARN tenant:Media:id). Image and Video are embeddable snapshots of a READY media item
+// that other domains store on their own resources; copy Media.image or Media.video as-is. Renditions on a snapshot
+// are output only: owning services fill them at read time, because rendition URLs are signed and expire.
 syntax = "proto3";
 
 package media.v1;
 
-// An image. Fields are not modeled yet.
-message Image {}
+import "buf/validate/validate.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "validation/v1/rules.proto";
 
-// A video. Fields are not modeled yet.
-message Video {}
+// Kind of media.
+enum MediaType {
+  // Unspecified. Not a valid value.
+  MEDIA_TYPE_UNSPECIFIED = 0;
+  // Still image, e.g. JPEG, PNG, WebP, HEIC.
+  MEDIA_TYPE_IMAGE = 1;
+  // Video. Animated GIFs are ingested as silent videos.
+  MEDIA_TYPE_VIDEO = 2;
+}
+
+// File format of a rendition.
+enum Format {
+  // Unspecified. In a RenditionSpec, the server picks: WebP for images, MP4 for videos.
+  FORMAT_UNSPECIFIED = 0;
+  // JPEG image.
+  FORMAT_JPEG = 1;
+  // PNG image, for images with transparency.
+  FORMAT_PNG = 2;
+  // WebP image.
+  FORMAT_WEBP = 3;
+  // MP4 video (H.264), progressive download.
+  FORMAT_MP4 = 4;
+}
+
+// How a rendition is fitted into the preset's width and height. Renditions never upscale beyond the source.
+enum Fit {
+  // Unspecified. Treated as CONTAIN.
+  FIT_UNSPECIFIED = 0;
+  // Fit inside the box, keeping the aspect ratio; one side may be smaller than the box.
+  FIT_CONTAIN = 1;
+  // Fill the box exactly, keeping the aspect ratio and cropping the centre, e.g. a square grid tile.
+  FIT_COVER = 2;
+}
+
+// Size and format of a rendition.
+message RenditionSpec {
+  option (buf.validate.message).cel = {
+    id: "rendition_spec.size"
+    message: "width or height is required"
+    expression: "this.width > 0 || this.height > 0"
+  };
+  option (buf.validate.message).cel = {
+    id: "rendition_spec.cover"
+    message: "fit COVER needs both width and height"
+    expression: "this.fit != 2 || (this.width > 0 && this.height > 0)"
+  };
+  // Width of the box in pixels. 0 derives it from height and the source aspect ratio.
+  int32 width = 1 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 4096
+  }];
+  // Height of the box in pixels. 0 derives it from width and the source aspect ratio.
+  int32 height = 2 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 4096
+  }];
+  // How to fit into the box.
+  Fit fit = 3 [(buf.validate.field).enum.defined_only = true];
+  // Output format. Unspecified lets the server pick. A still format on a video gives its poster frame.
+  Format format = 4 [(buf.validate.field).enum.defined_only = true];
+}
+
+// A named size, e.g. thumb_square_150 or video_720. Every rendition is generated from a preset.
+// The spec can't change: create a new preset instead, so existing renditions never go stale.
+message RenditionPreset {
+  // Unique identifier and name of the preset, e.g. feed_4x5_1080.
+  string id = 1 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = "^[a-z][a-z0-9_]{1,62}$"
+  ];
+  // What the preset is for.
+  string description = 2;
+  // Type of media the preset applies to.
+  MediaType media_type = 3 [(buf.validate.field).enum.defined_only = true];
+  // Size and format to generate.
+  RenditionSpec spec = 4;
+  // Whether to generate it for every new media item of media_type. Otherwise it's generated on request.
+  bool eager = 5;
+  // Time the preset was created.
+  google.protobuf.Timestamp create_time = 6;
+}
+
+// One generated size and format of a media item.
+message Rendition {
+  // Lifecycle of a rendition.
+  enum State {
+    // Unspecified. Not a valid value.
+    STATE_UNSPECIFIED = 0;
+    // Being generated.
+    STATE_PROCESSING = 1;
+    // Generated and servable.
+    STATE_READY = 2;
+    // Generation failed.
+    STATE_FAILED = 3;
+  }
+
+  // Id of the preset it was generated from.
+  string preset_id = 1;
+  // Whether it is ready to serve.
+  State state = 2;
+  // Width in pixels.
+  int32 width = 3;
+  // Height in pixels.
+  int32 height = 4;
+  // File format.
+  Format format = 5;
+  // Size of the file in bytes.
+  int64 size_bytes = 6;
+  // URL to download the file. May be signed; refetch after url_expire_time.
+  string url = 7;
+  // Time the url stops working. Unset if it doesn't expire.
+  google.protobuf.Timestamp url_expire_time = 8;
+}
+
+// An image, as embedded in another domain's resource. Copy it from Media.image.
+message Image {
+  // Id of the media item, references media.
+  string media_id = 1;
+  // Width of the original in pixels.
+  int32 width = 2 [(buf.validate.field).int32.gte = 0];
+  // Height of the original in pixels.
+  int32 height = 3 [(buf.validate.field).int32.gte = 0];
+  // Text alternative for screen readers.
+  string alt_text = 4 [(buf.validate.field).string.max_len = 1000];
+  // Attribution, e.g. "Photo: Reuters".
+  string credit = 5 [(buf.validate.field).string.max_len = 200];
+  // ThumbHash (https://evanw.github.io/thumbhash/), a ~25 byte blurred preview shown while loading.
+  bytes thumbhash = 6 [(buf.validate.field).bytes.max_len = 64];
+  // Ready renditions. Output only, filled at read time.
+  repeated Rendition renditions = 7;
+}
+
+// A video, as embedded in another domain's resource. Copy it from Media.video.
+message Video {
+  // Id of the media item, references media.
+  string media_id = 1;
+  // Width of the original in pixels.
+  int32 width = 2 [(buf.validate.field).int32.gte = 0];
+  // Height of the original in pixels.
+  int32 height = 3 [(buf.validate.field).int32.gte = 0];
+  // Length of the video.
+  google.protobuf.Duration duration = 4;
+  // Whether the video has an audio track.
+  bool has_audio = 5;
+  // Description of the video for screen readers.
+  string alt_text = 6 [(buf.validate.field).string.max_len = 1000];
+  // Attribution, e.g. "Video: AP".
+  string credit = 7 [(buf.validate.field).string.max_len = 200];
+  // Cover image, the first frame, with its own still renditions. Its media_id is empty.
+  Image poster = 8;
+  // Ready renditions. Output only, filled at read time.
+  repeated Rendition renditions = 9;
+}
+
+// The file a media item was created from.
+message SourceFile {
+  // MIME type, e.g. image/jpeg, video/mp4.
+  string mime_type = 1 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = "^[a-z]+/[a-zA-Z0-9.+-]+$"
+  ];
+  // Size in bytes.
+  int64 size_bytes = 2 [(buf.validate.field).int64.gte = 0];
+  // Original file name.
+  string filename = 3 [(buf.validate.field).string.max_len = 255];
+  // URL the file was imported from. Empty for uploads.
+  string uri = 4 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.http_url) = true
+  ];
+}
+
+// An uploaded or imported image or video. Its ARN is tenant:Media:id.
+message Media {
+  option (buf.validate.message).cel = {
+    id: "media.content_matches_type"
+    message: "image is set only for MEDIA_TYPE_IMAGE and video only for MEDIA_TYPE_VIDEO"
+    expression: "(!has(this.image) || this.type == 1) && (!has(this.video) || this.type == 2)"
+  };
+
+  // Lifecycle of a media item.
+  enum State {
+    // Unspecified. Not a valid value.
+    STATE_UNSPECIFIED = 0;
+    // Created; waiting for the client to upload the file, or for an import to fetch it.
+    STATE_UPLOAD_PENDING = 1;
+    // File received; reading its metadata and generating eager renditions.
+    STATE_PROCESSING = 2;
+    // Ready to attach and serve. Image or video is set.
+    STATE_READY = 3;
+    // Processing failed; see failure_reason.
+    STATE_FAILED = 4;
+  }
+
+  // Unique identifier of the media item.
+  string id = 1;
+  // Image or video.
+  MediaType type = 2 [(buf.validate.field).enum.defined_only = true];
+  // Lifecycle state.
+  State state = 3 [(buf.validate.field).enum.defined_only = true];
+  // Id of the user who uploaded it, references iam.
+  string owner_id = 4;
+  // The original file.
+  SourceFile source = 5;
+  // The image or video, set once READY.
+  oneof content {
+    // Set when type is MEDIA_TYPE_IMAGE.
+    Image image = 6;
+    // Set when type is MEDIA_TYPE_VIDEO.
+    Video video = 7;
+  }
+  // Why processing failed, e.g. unsupported format. Set when FAILED.
+  string failure_reason = 8;
+  // Time the media item was created.
+  google.protobuf.Timestamp create_time = 9;
+  // Time the media item was last updated.
+  google.protobuf.Timestamp update_time = 10;
+}
 
 // A list of images.
 message ImageCollection {
