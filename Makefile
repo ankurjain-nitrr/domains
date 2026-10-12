@@ -23,11 +23,12 @@ all: clean check
 init: check_os check_brew check_go check_java install-buf install-maven install-api-linter
 	@echo "Initialization complete."
 
-# Generate Go and Java code with the pinned remote plugins in buf.gen.yaml. Clears the previous output first,
-# so code for removed messages doesn't linger and break compilation.
+# Generate Go and Java code with the pinned remote plugins in buf.gen.yaml. --clean deletes the plugins' previous
+# output first, so code for removed messages doesn't linger and break compilation; don't keep files there.
+# The Go output gets the pinned module files from build/go so it builds on its own.
 generate: check_buf
-	@rm -rf $(GEN_DIR)/proto
-	@buf generate
+	@buf generate --clean
+	@cp build/go/go.mod build/go/go.sum $(GO_GEN_DIR)/
 
 # buf lint: STANDARD and COMMENTS rules, including protovalidate rule checks
 lint: check_buf
@@ -55,7 +56,6 @@ lock-check: check_buf
 
 # Compile and vet the generated Go code against the pinned module in build/go
 compile-go: generate check_go
-	@cp build/go/go.mod build/go/go.sum $(GO_GEN_DIR)/
 	@cd $(GO_GEN_DIR) && go build ./... && go vet ./...
 
 # Compile the generated Java code with build/java/pom.xml
@@ -74,7 +74,7 @@ help:
 	@echo "  check         Run everything CI runs (default)"
 	@echo "  all           clean, then check"
 	@echo "  init          Install buf, Maven and api-linter (macOS only)"
-	@echo "  generate      Generate Go and Java code into gen/"
+	@echo "  generate      Regenerate Go and Java code into gen/proto, replacing what is there"
 	@echo "  lint          buf lint (STANDARD + COMMENTS)"
 	@echo "  format        Format proto files in place"
 	@echo "  format-check  Fail if any proto file isn't formatted"
