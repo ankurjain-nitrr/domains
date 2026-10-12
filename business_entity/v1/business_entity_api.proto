@@ -78,6 +78,26 @@ message DeleteBusinessEntityResponse {
   business_entity.v1.BusinessEntity business_entity = 1;
 }
 
+// Request message for BusinessEntityService.ListBusinessEntities.
+message ListBusinessEntitiesRequest {
+  // Only entities this user is a director of, references iam.
+  string director_user_id = 1;
+  // Only entities of this type.
+  business_entity.v1.BusinessType entity_type = 2 [(buf.validate.field).enum.defined_only = true];
+  // Maximum number of results to return. The server applies a default and a maximum.
+  int64 page_size = 3 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
+  string page_token = 4;
+}
+
+// Response message for BusinessEntityService.ListBusinessEntities.
+message ListBusinessEntitiesResponse {
+  // The business entities on this page.
+  repeated business_entity.v1.BusinessEntity business_entities = 1;
+  // Token for the next page. Empty when there are no more results.
+  string next_page_token = 2;
+}
+
 // Manages business entities registered under Indian law.
 service BusinessEntityService {
   // Creates a business entity.
@@ -88,4 +108,6 @@ service BusinessEntityService {
   rpc UpdateBusinessEntity(UpdateBusinessEntityRequest) returns (UpdateBusinessEntityResponse) {}
   // Deletes a business entity and returns it.
   rpc DeleteBusinessEntity(DeleteBusinessEntityRequest) returns (DeleteBusinessEntityResponse) {}
+  // Lists business entities, a page at a time.
+  rpc ListBusinessEntities(ListBusinessEntitiesRequest) returns (ListBusinessEntitiesResponse) {}
 }

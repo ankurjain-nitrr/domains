@@ -5,6 +5,7 @@ package business_entity.v1;
 import "buf/validate/validate.proto";
 import "commons/v1/address.proto";
 import "commons/v1/phone.proto";
+import "google/protobuf/timestamp.proto";
 import "validation/v1/rules.proto";
 
 // Business entity as per indian laws and regulations
@@ -53,6 +54,10 @@ message BusinessEntity {
   ];
   // Whether the business entity is active.
   bool is_active = 12;
+  // Time the business entity was created.
+  google.protobuf.Timestamp create_time = 13;
+  // Time the business entity was last updated.
+  google.protobuf.Timestamp update_time = 14;
 }
 
 // Enumeration representing different types of business entities in India
