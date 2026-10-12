@@ -5,6 +5,7 @@ package brand.v1;
 import "brand/v1/brand.proto";
 import "buf/validate/validate.proto";
 import "google/protobuf/field_mask.proto";
+import "validation/v1/rules.proto";
 
 // Request message for BrandService.CreateBrand.
 message CreateBrandRequest {
@@ -17,14 +18,9 @@ message CreateBrandRequest {
       expression: "this.name != ''"
     },
     (buf.validate.field).cel = {
-      id: "brand.owner_id"
-      message: "owner_id is required"
-      expression: "this.owner_id != ''"
-    },
-    (buf.validate.field).cel = {
-      id: "brand.owner_type"
-      message: "owner_type is required"
-      expression: "this.owner_type != 0"
+      id: "brand.owner_arn"
+      message: "owner_arn is required"
+      expression: "this.owner_arn != ''"
     }
   ];
 }
@@ -73,6 +69,27 @@ message DeleteBrandResponse {
   brand.v1.Brand brand = 1;
 }
 
+// Request message for BrandService.ListBrands.
+message ListBrandsRequest {
+  // Only brands owned by this user or business entity.
+  string owner_arn = 1 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ];
+  // Maximum number of results to return. The server applies a default and a maximum.
+  int64 page_size = 2 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
+  string page_token = 3;
+}
+
+// Response message for BrandService.ListBrands.
+message ListBrandsResponse {
+  // The brands on this page.
+  repeated brand.v1.Brand brands = 1;
+  // Token for the next page. Empty when there are no more results.
+  string next_page_token = 2;
+}
+
 // Manages brands owned by users or business entities.
 service BrandService {
   // Creates a brand.
@@ -83,4 +100,6 @@ service BrandService {
   rpc UpdateBrand(UpdateBrandRequest) returns (UpdateBrandResponse) {}
   // Deletes a brand and returns it.
   rpc DeleteBrand(DeleteBrandRequest) returns (DeleteBrandResponse) {}
+  // Lists brands, a page at a time.
+  rpc ListBrands(ListBrandsRequest) returns (ListBrandsResponse) {}
 }
