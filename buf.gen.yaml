@@ -4,8 +4,16 @@ managed:
   java_multiple_files: true
   java_package_prefix:
     default: "com.domains"
+    # dependencies keep their own published packages
+    except:
+      - buf.build/googleapis/googleapis
+      - buf.build/bufbuild/protovalidate
   go_package_prefix:
     default: "github.com/ankurjainnitrr/domains/gen/proto/go"
+    # dependencies keep their own published packages
+    except:
+      - buf.build/googleapis/googleapis
+      - buf.build/bufbuild/protovalidate
 plugins:
   - name: go
     out: gen/proto/go

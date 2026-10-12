@@ -3,69 +3,91 @@ syntax = "proto3";
 package bank.v1;
 
 import "bank/v1/bank.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/field_mask.proto";
 
 message CreateBankAccountRequest {
-    BankAccount bank_account = 1;
+  BankAccount bank_account = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "bank_account.owner"
+      message: "owner is required"
+      expression: "has(this.owner)"
+    },
+    (buf.validate.field).cel = {
+      id: "bank_account.account_number"
+      message: "account_number is required"
+      expression: "this.account_number != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "bank_account.ifsc_code"
+      message: "ifsc_code is required"
+      expression: "this.ifsc_code != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "bank_account.account_type"
+      message: "account_type is required"
+      expression: "this.account_type != 0"
+    }
+  ];
 }
 
 message CreateBankAccountResponse {
-    BankAccount bank_account = 1;
+  BankAccount bank_account = 1;
 }
 
 message GetBankAccountRequest {
-    string account_number = 1;
+  string account_number = 1 [(buf.validate.field).required = true];
 }
 
 message GetBankAccountResponse {
-    BankAccount bank_account = 1;
+  BankAccount bank_account = 1;
 }
 
 message ListBankAccountsRequest {
-    BankAccountOwner owner = 1;
-    int64 page_size = 2;
-    string page_token = 3;
+  BankAccountOwner owner = 1 [(buf.validate.field).required = true];
+  int64 page_size = 2 [(buf.validate.field).int64.gte = 0];
+  string page_token = 3;
 }
 
 message ListBankAccountsResponse {
-    repeated BankAccount bank_accounts = 1;
-    string next_page_token = 2;
+  repeated BankAccount bank_accounts = 1;
+  string next_page_token = 2;
 }
 
+// account_status cannot be updated here, use MarkBankAccountAsActive / MarkBankAccountAsInactive
 message UpdateBankAccountRequest {
-    BankAccount bank_account = 1;
+  BankAccount bank_account = 1 [(buf.validate.field).required = true];
+  // fields to update; if omitted, all fields set in bank_account are updated (AIP-134)
+  google.protobuf.FieldMask update_mask = 2;
 }
 
 message UpdateBankAccountResponse {
-    BankAccount bank_account = 1;
+  BankAccount bank_account = 1;
 }
 
 // message for marking a bank account as inactive
 message MarkBankAccountAsInactiveRequest {
-    string bank_account_id = 1;
+  string bank_account_id = 1 [(buf.validate.field).required = true];
 }
 
 message MarkBankAccountAsInactiveResponse {
-    BankAccount bank_account = 1;
+  BankAccount bank_account = 1;
 }
 
 message MarkBankAccountAsActiveRequest {
-    string bank_account_id = 1;
+  string bank_account_id = 1 [(buf.validate.field).required = true];
 }
 
 message MarkBankAccountAsActiveResponse {
-    BankAccount bank_account = 1;
-} 
-
-service BankService {
-    rpc CreateBankAccount(CreateBankAccountRequest) returns (CreateBankAccountResponse) {}
-    rpc GetBankAccount(GetBankAccountRequest) returns (GetBankAccountResponse) {}
-    rpc UpdateBankAccount(UpdateBankAccountRequest) returns (UpdateBankAccountResponse) {}
-    rpc ListBankAccounts(ListBankAccountsRequest) returns (ListBankAccountsResponse) {}
-    rpc MarkBankAccountAsInactive(MarkBankAccountAsInactiveRequest) returns (MarkBankAccountAsInactiveResponse) {}
-    rpc MarkBankAccountAsActive(MarkBankAccountAsActiveRequest) returns (MarkBankAccountAsActiveResponse) {}
+  BankAccount bank_account = 1;
 }
 
-
-
-
-
+service BankService {
+  rpc CreateBankAccount(CreateBankAccountRequest) returns (CreateBankAccountResponse) {}
+  rpc GetBankAccount(GetBankAccountRequest) returns (GetBankAccountResponse) {}
+  rpc UpdateBankAccount(UpdateBankAccountRequest) returns (UpdateBankAccountResponse) {}
+  rpc ListBankAccounts(ListBankAccountsRequest) returns (ListBankAccountsResponse) {}
+  rpc MarkBankAccountAsInactive(MarkBankAccountAsInactiveRequest) returns (MarkBankAccountAsInactiveResponse) {}
+  rpc MarkBankAccountAsActive(MarkBankAccountAsActiveRequest) returns (MarkBankAccountAsActiveResponse) {}
+}

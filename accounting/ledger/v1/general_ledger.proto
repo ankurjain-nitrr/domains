@@ -2,61 +2,65 @@ syntax = "proto3";
 
 package accounting.ledger.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
-
 import "google/type/money.proto"; // Importing Google's Money type'
 
 message GeneralLedger {
-    string id = 1; // id of the general ledger
-    string tenant_id = 2; // tenant id
-    string account_id = 3; // id of the account
-    google.type.Money balance = 4; // balance of the general ledger
-    google.protobuf.Timestamp created_at = 5; // created at timestamp
-    google.protobuf.Timestamp updated_at = 6; // updated at timestamp
+  string id = 1; // id of the general ledger
+  string tenant_id = 2; // tenant id
+  string account_id = 3; // id of the account
+  google.type.Money balance = 4; // balance of the general ledger
+  google.protobuf.Timestamp create_time = 5; // time the ledger was created
+  google.protobuf.Timestamp update_time = 6; // time the ledger was last updated
 }
 
 message GeneralLedgerEntry {
-    string id = 1; // id of the general ledger entry
-    string ledger_id = 2; // id of the general ledger
-    string account_id = 3; // id of the account against which the transaction is made
-    GeneralLedgerType general_ledger_type = 4; // type of the general ledger
-    EntryType entry_type = 5; // type of the entry
-    google.type.Money amount = 6; // amount of the transaction
-    google.protobuf.Timestamp entry_date = 7; // date of the transaction
-    string description = 8; // description of the transaction
-    string reference_id = 9; // reference id of the transaction
+  string id = 1; // id of the general ledger entry
+  string ledger_id = 2; // id of the general ledger
+  string account_id = 3; // id of the account against which the transaction is made
+  GeneralLedgerType general_ledger_type = 4 [(buf.validate.field).enum.defined_only = true]; // type of the general ledger
+  EntryType entry_type = 5 [(buf.validate.field).enum.defined_only = true]; // type of the entry
+  google.type.Money amount = 6 [(buf.validate.field).cel = {
+    id: "general_ledger_entry.amount_positive"
+    message: "amount must be positive"
+    expression: "this.units > 0 || (this.units == 0 && this.nanos > 0)"
+  }]; // amount of the transaction
+  google.protobuf.Timestamp entry_time = 7; // time of the transaction
+  string description = 8; // description of the transaction
+  string reference_id = 9; // reference id of the transaction
 }
 
 enum GeneralLedgerType {
-    GENERAL_LEDGER_TYPE_UNSPECIFIED = 0;
-    GENERAL_LEDGER_TYPE_ASSET = 1; // Cash, Debtor, Inventory, etc.
-    GENERAL_LEDGER_TYPE_LIABILITY = 2; // Creditor, Loan, etc.
-    GENERAL_LEDGER_TYPE_EQUITY = 3; // Owner's Equity, Shareholders' Equity, etc.
-    GENERAL_LEDGER_TYPE_INCOME = 4; // Sales Revenue, Interest Income, etc.
-    GENERAL_LEDGER_TYPE_EXPENSE = 5; // Rent Expense, Salaries Expense, etc.
-    GENERAL_LEDGER_TYPE_REVENUE = 6; // Sales Revenue, Interest Revenue, etc.
-    GENERAL_LEDGER_TYPE_GAIN = 7; // For non-operating gains
-    GENERAL_LEDGER_TYPE_LOSS = 8; // For non-operating losses
-    GENERAL_LEDGER_TYPE_OTHER = 9; // For other types of general ledger
+  GENERAL_LEDGER_TYPE_UNSPECIFIED = 0;
+  GENERAL_LEDGER_TYPE_ASSET = 1; // Cash, Debtor, Inventory, etc.
+  GENERAL_LEDGER_TYPE_LIABILITY = 2; // Creditor, Loan, etc.
+  GENERAL_LEDGER_TYPE_EQUITY = 3; // Owner's Equity, Shareholders' Equity, etc.
+  GENERAL_LEDGER_TYPE_INCOME = 4; // Sales Revenue, Interest Income, etc.
+  GENERAL_LEDGER_TYPE_EXPENSE = 5; // Rent Expense, Salaries Expense, etc.
+  GENERAL_LEDGER_TYPE_REVENUE = 6; // Sales Revenue, Interest Revenue, etc.
+  GENERAL_LEDGER_TYPE_GAIN = 7; // For non-operating gains
+  GENERAL_LEDGER_TYPE_LOSS = 8; // For non-operating losses
+  GENERAL_LEDGER_TYPE_OTHER = 9; // For other types of general ledger
 }
 
 enum EntryType {
-    ENTRY_TYPE_UNSPECIFIED = 0;
-    ENTRY_TYPE_DEBIT = 1;
-    ENTRY_TYPE_CREDIT = 2;
+  ENTRY_TYPE_UNSPECIFIED = 0;
+  ENTRY_TYPE_DEBIT = 1;
+  ENTRY_TYPE_CREDIT = 2;
 }
 
 enum TransactionType {
-    TRANSACTION_TYPE_UNSPECIFIED = 0;
-    TRANSACTION_TYPE_SALES = 1; // Sale of goods/services
-    TRANSACTION_TYPE_PURCHASE = 2; // Purchase of goods/services
-    TRANSACTION_TYPE_RECEIPT = 3; // Money received (e.g., from customers)
-    TRANSACTION_TYPE_EXPENSE = 4; // General expenses not covered by other types
-    TRANSACTION_TYPE_TAX_PAYMENT = 5; // Payment of taxes
-    TRANSACTION_TYPE_LOAN_ISSUANCE = 6; // Loan given out
-    TRANSACTION_TYPE_LOAN_REPAYMENT = 7; // Repayment of loan
-    TRANSACTION_TYPE_DIVIDEND_PAYMENT = 8; // Payment of dividends to shareholders
-    TRANSACTION_TYPE_RETURN = 9; // Return of goods (from customer or to vendor)
-    TRANSACTION_TYPE_CANCELLATION = 10; // Transaction reversal
-    TRANSACTION_TYPE_OTHER = 11; // Other types not covered explicitly
+  TRANSACTION_TYPE_UNSPECIFIED = 0;
+  TRANSACTION_TYPE_SALES = 1; // Sale of goods/services
+  TRANSACTION_TYPE_PURCHASE = 2; // Purchase of goods/services
+  TRANSACTION_TYPE_RECEIPT = 3; // Money received (e.g., from customers)
+  TRANSACTION_TYPE_EXPENSE = 4; // General expenses not covered by other types
+  TRANSACTION_TYPE_TAX_PAYMENT = 5; // Payment of taxes
+  TRANSACTION_TYPE_LOAN_ISSUANCE = 6; // Loan given out
+  TRANSACTION_TYPE_LOAN_REPAYMENT = 7; // Repayment of loan
+  TRANSACTION_TYPE_DIVIDEND_PAYMENT = 8; // Payment of dividends to shareholders
+  TRANSACTION_TYPE_RETURN = 9; // Return of goods (from customer or to vendor)
+  TRANSACTION_TYPE_CANCELLATION = 10; // Transaction reversal
+  TRANSACTION_TYPE_OTHER = 11; // Other types not covered explicitly
 }

@@ -2,52 +2,55 @@ syntax = "proto3";
 
 package iam.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "validation/v1/rules.proto";
 
 message LoginWithPasswordRequest {
-    oneof identifier {
-        string email = 1;
-        string phone = 2;
-    }
-    string password = 3;
+  oneof identifier {
+    option (buf.validate.oneof).required = true;
+    string email = 1 [(buf.validate.field).string.email = true];
+    string phone = 2 [(buf.validate.field).string.(validation.v1.phone_e164) = true];
+  }
+  string password = 3 [(buf.validate.field).required = true];
 }
 
 message LoginWithPasswordResponse {
-    string token = 1;
+  string token = 1;
 }
 
 message GenerateOTPRequest {
-    oneof identifier {
-        string email = 1;
-        string phone = 2;
-    }
+  oneof identifier {
+    option (buf.validate.oneof).required = true;
+    string email = 1 [(buf.validate.field).string.email = true];
+    string phone = 2 [(buf.validate.field).string.(validation.v1.phone_e164) = true];
+  }
 }
 
-message GenerateOTPResponse {
-}
+message GenerateOTPResponse {}
 
 // verify OTP
 message VerifyOTPRequest {
-    oneof identifier {
-        string email = 1;
-        string phone = 2;
-    }
-    string otp = 3;
+  oneof identifier {
+    option (buf.validate.oneof).required = true;
+    string email = 1 [(buf.validate.field).string.email = true];
+    string phone = 2 [(buf.validate.field).string.(validation.v1.phone_e164) = true];
+  }
+  string otp = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.pattern = '^[0-9]{6}$'
+  ];
 }
 
 message VerifyOTPResponse {
-    string token = 1;
-    string refresh_token = 2;
-    google.protobuf.Timestamp token_expires_at = 3;
-    google.protobuf.Timestamp refresh_token_expires_at = 4;
+  string token = 1;
+  string refresh_token = 2;
+  google.protobuf.Timestamp token_expire_time = 3;
+  google.protobuf.Timestamp refresh_token_expire_time = 4;
 }
 
 service AuthenticationService {
-    rpc GenerateOTP(GenerateOTPRequest) returns (GenerateOTPResponse) {}
-    rpc VerifyOTP(VerifyOTPRequest) returns (VerifyOTPResponse) {}
-    rpc LoginWithPassword(LoginWithPasswordRequest) returns (LoginWithPasswordResponse) {}
+  rpc GenerateOTP(GenerateOTPRequest) returns (GenerateOTPResponse) {}
+  rpc VerifyOTP(VerifyOTPRequest) returns (VerifyOTPResponse) {}
+  rpc LoginWithPassword(LoginWithPasswordRequest) returns (LoginWithPasswordResponse) {}
 }
-
-
-
-

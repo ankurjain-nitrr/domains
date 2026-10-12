@@ -2,65 +2,76 @@ syntax = "proto3";
 
 package content_management.v1;
 
+import "buf/validate/validate.proto";
 import "commons/v1/time.proto";
 import "content_management/v1/content_management.proto";
+import "google/protobuf/field_mask.proto";
 
 message CreateContentRequest {
-    content_management.v1.Content content = 1;
+  content_management.v1.Content content = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "content.created_by"
+      message: "created_by is required"
+      expression: "this.created_by != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "content.title_or_text"
+      message: "title or text is required"
+      expression: "this.title != '' || this.text != ''"
+    }
+  ];
 }
 
 message CreateContentResponse {
-    content_management.v1.Content content = 1;
+  content_management.v1.Content content = 1;
 }
 
 message GetContentRequest {
-    string id = 1;
+  string id = 1 [(buf.validate.field).required = true];
 }
 
 message GetContentResponse {
-    content_management.v1.Content content = 1;
+  content_management.v1.Content content = 1;
 }
 
 message UpdateContentRequest {
-    content_management.v1.Content content = 1;
+  content_management.v1.Content content = 1 [(buf.validate.field).required = true];
+  // fields to update; if omitted, all fields set in content are updated (AIP-134)
+  google.protobuf.FieldMask update_mask = 2;
 }
 
 message UpdateContentResponse {
-    content_management.v1.Content content = 1;
+  content_management.v1.Content content = 1;
 }
 
 message DeleteContentRequest {
-    string id = 1;
+  string id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteContentResponse {
-    content_management.v1.Content content = 1;
+  content_management.v1.Content content = 1;
 }
 
 message ListContentRequest {
-    string created_by = 1; // references user id from user management service
-    oneof time_range {
-        commons.v1.TimeRange created_at_time_range = 2;
-        commons.v1.TimeRange updated_at_time_range = 3;
-    }
-    int64 page_size = 4;
-    string page_token = 5;
+  string created_by = 1; // references user id from user management service
+  oneof time_range {
+    commons.v1.TimeRange create_time_range = 2;
+    commons.v1.TimeRange update_time_range = 3;
+  }
+  int64 page_size = 4 [(buf.validate.field).int64.gte = 0];
+  string page_token = 5;
 }
 
 message ListContentResponse {
-    repeated content_management.v1.Content contents = 1;
-    string next_page_token = 2;
+  repeated content_management.v1.Content contents = 1;
+  string next_page_token = 2;
 }
 
 service ContentManagementService {
-    rpc CreateContent(CreateContentRequest) returns (CreateContentResponse) {}
-    rpc GetContent(GetContentRequest) returns (GetContentResponse) {}
-    rpc UpdateContent(UpdateContentRequest) returns (UpdateContentResponse) {}
-    rpc DeleteContent(DeleteContentRequest) returns (DeleteContentResponse) {}
-    rpc ListContent(ListContentRequest) returns (ListContentResponse) {}
+  rpc CreateContent(CreateContentRequest) returns (CreateContentResponse) {}
+  rpc GetContent(GetContentRequest) returns (GetContentResponse) {}
+  rpc UpdateContent(UpdateContentRequest) returns (UpdateContentResponse) {}
+  rpc DeleteContent(DeleteContentRequest) returns (DeleteContentResponse) {}
+  rpc ListContent(ListContentRequest) returns (ListContentResponse) {}
 }
-
-
-
-
-

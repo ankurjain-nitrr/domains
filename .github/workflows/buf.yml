@@ -1,0 +1,25 @@
+name: Buf
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # compiles all protos (buf build), runs buf lint and checks buf format
+      - uses: bufbuild/buf-action@v1
+        with:
+          version: 1.73.0
+          lint: true
+          format: true # fails if any file differs from `buf format`
+          breaking: false # pre-release; enable once the APIs are published
+          push: false
+          archive: false
+          pr_comment: false

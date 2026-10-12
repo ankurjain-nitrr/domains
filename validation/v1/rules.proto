@@ -1,0 +1,80 @@
+// Shared validation rules ("tags") for use across domains, built on protovalidate predefined rules.
+// See docs/api-conventions.md#validation for how and when to use them.
+//
+// Usage: string pan_number = 4 [(buf.validate.field).string.(validation.v1.pan) = true];
+//
+// Predefined rules are extensions, so this file must be proto2 (or editions); proto3 files can use them.
+// Extension numbers are in the private range 50000-99999 and must stay unique per extended message.
+syntax = "proto2";
+
+package validation.v1;
+
+import "buf/validate/validate.proto";
+
+extend buf.validate.StringRules {
+  // multi tenant entity reference: tenant:entity_type:entity_id
+  optional bool entity_arn = 50001 [(buf.validate.predefined).cel = {
+    id: "string.entity_arn"
+    expression: "!rule || this.matches('^[^:]+:[^:]+:[^:]+$') ? '' : 'must be an entity arn in the form tenant:entity_type:entity_id'"
+  }];
+
+  // Indian Permanent Account Number, e.g. ABCDE1234F
+  optional bool pan = 50002 [(buf.validate.predefined).cel = {
+    id: "string.pan"
+    expression: "!rule || this.matches('^[A-Z]{5}[0-9]{4}[A-Z]$') ? '' : 'must be a valid PAN (e.g. ABCDE1234F)'"
+  }];
+
+  // Indian GST Identification Number: 2-digit state code, PAN, entity number, Z, checksum
+  optional bool gstin = 50003 [(buf.validate.predefined).cel = {
+    id: "string.gstin"
+    expression: "!rule || this.matches('^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$') ? '' : 'must be a valid GSTIN'"
+  }];
+
+  // Indian Corporate Identification Number, e.g. U12345MH2020PTC123456
+  optional bool cin = 50004 [(buf.validate.predefined).cel = {
+    id: "string.cin"
+    expression: "!rule || this.matches('^[LU][0-9]{5}[A-Z]{2}[0-9]{4}[A-Z]{3}[0-9]{6}$') ? '' : 'must be a valid CIN'"
+  }];
+
+  // Indian Financial System Code of a bank branch, e.g. SBIN0001234
+  optional bool ifsc = 50005 [(buf.validate.predefined).cel = {
+    id: "string.ifsc"
+    expression: "!rule || this.matches('^[A-Z]{4}0[A-Z0-9]{6}$') ? '' : 'must be a valid IFSC (e.g. SBIN0001234)'"
+  }];
+
+  // Indian 6-digit postal code
+  optional bool pincode = 50006 [(buf.validate.predefined).cel = {
+    id: "string.pincode"
+    expression: "!rule || this.matches('^[1-9][0-9]{5}$') ? '' : 'must be a 6-digit PIN code'"
+  }];
+
+  // Indian Aadhaar number, 12 digits not starting with 0 or 1
+  optional bool aadhaar = 50007 [(buf.validate.predefined).cel = {
+    id: "string.aadhaar"
+    expression: "!rule || this.matches('^[2-9][0-9]{11}$') ? '' : 'must be a 12-digit Aadhaar number'"
+  }];
+
+  // Indian Director Identification Number, 8 digits
+  optional bool din = 50008 [(buf.validate.predefined).cel = {
+    id: "string.din"
+    expression: "!rule || this.matches('^[0-9]{8}$') ? '' : 'must be an 8-digit DIN'"
+  }];
+
+  // full phone number in E.164 format, e.g. +919876543210
+  optional bool phone_e164 = 50009 [(buf.validate.predefined).cel = {
+    id: "string.phone_e164"
+    expression: "!rule || this.matches('^\\\\+[1-9][0-9]{6,14}$') ? '' : 'must be an E.164 phone number (e.g. +919876543210)'"
+  }];
+
+  // country calling code, with or without leading +, e.g. +91
+  optional bool calling_code = 50010 [(buf.validate.predefined).cel = {
+    id: "string.calling_code"
+    expression: "!rule || this.matches('^\\\\+?[1-9][0-9]{0,2}$') ? '' : 'must be a country calling code (e.g. +91)'"
+  }];
+
+  // absolute http or https URL
+  optional bool http_url = 50011 [(buf.validate.predefined).cel = {
+    id: "string.http_url"
+    expression: "!rule || (this.isUri() && this.matches('^https?://')) ? '' : 'must be an http:// or https:// URL'"
+  }];
+}

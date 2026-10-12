@@ -2,25 +2,36 @@ syntax = "proto3";
 
 package iam.v1;
 
+import "buf/validate/validate.proto";
 import "iam/v1/actions.proto";
 
 // checks if the user has the permission to perform the action on the resource or has a specific permission
 message AuthorizeRequest {
-    message ResourceAction {
-        string resource = 1; // resource arn
-        repeated Action actions = 2;
-    }
-    string token = 1; //user token
-    oneof permission {
-        ResourceAction resource_action = 2;
-        string permission_id = 3; // id of the permission
-    }
+  message ResourceAction {
+    string resource = 1 [(buf.validate.field).required = true]; // resource arn
+    repeated Action actions = 2 [(buf.validate.field).repeated = {
+      min_items: 1
+      unique: true
+      items: {
+        enum: {
+          defined_only: true
+          not_in: [0]
+        }
+      }
+    }];
+  }
+  string token = 1 [(buf.validate.field).required = true]; //user token
+  oneof permission {
+    option (buf.validate.oneof).required = true;
+    ResourceAction resource_action = 2;
+    string permission_id = 3 [(buf.validate.field).string.min_len = 1]; // id of the permission
+  }
 }
 
 message AuthorizeResponse {
-    bool authorized = 1;
+  bool authorized = 1;
 }
 
 service AuthorizationService {
-    rpc Authorize(AuthorizeRequest) returns (AuthorizeResponse) {}
+  rpc Authorize(AuthorizeRequest) returns (AuthorizeResponse) {}
 }

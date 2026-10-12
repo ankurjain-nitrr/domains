@@ -2,8 +2,10 @@ syntax = "proto3";
 
 package media.v1;
 
-message Image {
-}
+message Image {}
 
-message Video {
+message Video {}
+
+message ImageCollection {
+  repeated Image values = 1;
 }

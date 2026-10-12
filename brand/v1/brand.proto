@@ -2,23 +2,34 @@ syntax = "proto3";
 
 package brand.v1;
 
+import "buf/validate/validate.proto";
 import "media/v1/media.proto";
+import "validation/v1/rules.proto";
 
 enum BrandOwnerType {
-    BRAND_OWNER_TYPE_UNSPECIFIED = 0;
-    BRAND_OWNER_TYPE_INDIVIDUAL = 1;
-    BRAND_OWNER_TYPE_COMPANY = 2;
+  BRAND_OWNER_TYPE_UNSPECIFIED = 0;
+  BRAND_OWNER_TYPE_INDIVIDUAL = 1;
+  BRAND_OWNER_TYPE_COMPANY = 2;
 }
 
 message Brand {
-    string id = 1;
-    string name = 2;
-    string tagline = 3;
-    string description = 4;
-    media.v1.Image logo = 5;
-    string website = 6; // must start with http:// or https://
-    string owner_id = 7; // must be registered as user in iam service or business entity in entity service service
-    BrandOwnerType owner_type = 8;
-    int32 trademark_class = 9; // must be between 1 and 45
-    bool is_active = 10;
+  string id = 1;
+  string name = 2;
+  string tagline = 3;
+  string description = 4;
+  media.v1.Image logo = 5;
+  string website = 6 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.http_url) = true
+  ]; // must start with http:// or https://
+  string owner_id = 7; // must be registered as user in iam service or business entity in entity service service
+  BrandOwnerType owner_type = 8 [(buf.validate.field).enum.defined_only = true];
+  int32 trademark_class = 9 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).int32 = {
+      gte: 1
+      lte: 45
+    }
+  ]; // must be between 1 and 45
+  bool is_active = 10;
 }

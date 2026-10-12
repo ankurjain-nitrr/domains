@@ -2,29 +2,39 @@ syntax = "proto3";
 
 package bank.v1;
 
+import "buf/validate/validate.proto";
+import "validation/v1/rules.proto";
+
 enum AccountType {
-    ACCOUNT_TYPE_UNSPECIFIED = 0;
-    ACCOUNT_TYPE_SAVINGS = 1;
-    ACCOUNT_TYPE_CURRENT = 2;
+  ACCOUNT_TYPE_UNSPECIFIED = 0;
+  ACCOUNT_TYPE_SAVINGS = 1;
+  ACCOUNT_TYPE_CURRENT = 2;
 }
 
 enum AccountStatus {
-    ACCOUNT_STATUS_UNSPECIFIED = 0;
-    ACCOUNT_STATUS_ACTIVE = 1;
-    ACCOUNT_STATUS_INACTIVE = 2; // blocked or closed or inactive for some reason
+  ACCOUNT_STATUS_UNSPECIFIED = 0;
+  ACCOUNT_STATUS_ACTIVE = 1;
+  ACCOUNT_STATUS_INACTIVE = 2; // blocked or closed or inactive for some reason
 }
 
 message BankAccount {
-    BankAccountOwner owner = 1;
-    string account_number = 2;
-    string ifsc_code = 3; // ifsc code of the bank branch
-    AccountType account_type = 4;
-    AccountStatus account_status = 5;
+  BankAccountOwner owner = 1;
+  string account_number = 2 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = '^[0-9]{9,18}$'
+  ];
+  string ifsc_code = 3 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.ifsc) = true
+  ]; // ifsc code of the bank branch
+  AccountType account_type = 4 [(buf.validate.field).enum.defined_only = true];
+  AccountStatus account_status = 5 [(buf.validate.field).enum.defined_only = true];
 }
 
 message BankAccountOwner {
-    oneof identifier {
-        string user_id = 1; // id of the user who owns the account, references user id from iam service, must have a valid KYC
-        string business_id = 2; // id of the business who owns the account, references business id from business service
-    }
+  oneof identifier {
+    option (buf.validate.oneof).required = true;
+    string user_id = 1 [(buf.validate.field).string.min_len = 1]; // id of the user who owns the account, references user id from iam service, must have a valid KYC
+    string business_id = 2 [(buf.validate.field).string.min_len = 1]; // id of the business who owns the account, references business id from business service
+  }
 }

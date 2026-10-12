@@ -2,68 +2,141 @@ syntax = "proto3";
 
 package user_interactions.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "user_interactions/v1/filters.proto";
+import "validation/v1/rules.proto";
 
+// multi tenant dislike capabilities
+//
+// Likes and dislikes are mutually exclusive: a user can either like or dislike an entity, not both.
+// Creating a dislike removes the user's existing like on the same entity in the same operation.
+// Undoing a dislike does not restore a previously removed like.
 message Dislike {
-    string id = 1;
-    string user_id = 2;
-    string entity_arn = 3; // tenent:entity_type:entity_id
-    google.protobuf.Timestamp created_at = 4;
+  string id = 1;
+  string user_id = 2; // references id from iam service
+  string entity_arn = 3 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ]; // multi tenant id # tenant:entity_type:entity_id
+  google.protobuf.Timestamp create_time = 4;
 }
 
+// removes the user's existing like on the same entity, if any
 message DislikeRequest {
-    Dislike dislike = 1;
+  Dislike dislike = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "dislike.user_id"
+      message: "user_id is required"
+      expression: "this.user_id != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "dislike.entity_arn"
+      message: "entity_arn is required"
+      expression: "this.entity_arn != ''"
+    }
+  ];
 }
 
 message DislikeResponse {
-    Dislike dislike = 1;
-}
-
-message HasDislikedRequest {
-    string user_id = 1;
-    string entity_arn = 2; // tenent:entity_type:entity_id
-}
-
-message HasDislikedResponse {
-    Dislike dislike = 1;
+  Dislike dislike = 1;
 }
 
 message UndoDislikeRequest {
-    string user_id = 1;
-    string entity_arn = 2; // tenent:entity_type:entity_id
+  string user_id = 1 [(buf.validate.field).required = true];
+  string entity_arn = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ]; // multi tenant id # tenant:entity_type:entity_id
 }
 
+// returns the removed dislike
 message UndoDislikeResponse {
-    Dislike dislike = 1;
+  Dislike dislike = 1;
 }
 
+message HasDislikedRequest {
+  string user_id = 1 [(buf.validate.field).required = true];
+  string entity_arn = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ]; // multi tenant id # tenant:entity_type:entity_id
+}
+
+message HasDislikedResponse {
+  bool has_disliked = 1;
+}
+
+// check multiple entities for one user in one call, e.g. for rendering a feed
+message BatchHasDislikedRequest {
+  string user_id = 1 [(buf.validate.field).required = true];
+  repeated string entity_arns = 2 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 100
+    unique: true
+    items: {
+      string: {[validation.v1.entity_arn]: true}
+    }
+  }]; // multi tenant id # tenant:entity_type:entity_id
+}
+
+message BatchHasDislikedResponse {
+  map<string, bool> has_disliked = 1; // entity_arn -> whether the user has disliked it
+}
+
+// list all dislikes by user or dislikes on specific entity
 message ListDislikesRequest {
-    oneof request {
-        FilterByUser filter_by_user = 1;
-        FilterByEntity filter_by_entity = 2;
-    }
-    int64 page_size = 3;
-    string page_token = 4;
-
-    message FilterByUser {
-        string user_id = 1;
-        string tenant = 2;
-        string entity_type = 3; // optional
-    }
-
-    message FilterByEntity {
-        string entity_arn = 1; // tenent:entity_type:entity_id
-    }
+  oneof filter {
+    option (buf.validate.oneof).required = true;
+    FilterByUser filter_by_user = 1;
+    FilterByEntity filter_by_entity = 2;
+  }
+  int64 page_size = 3 [(buf.validate.field).int64.gte = 0];
+  string page_token = 4;
 }
 
 message ListDislikesResponse {
-    repeated Dislike dislikes = 1;
-    string next_page_token = 2;
+  repeated Dislike dislikes = 1;
+  string next_page_token = 2;
+}
+
+// count dislikes by user or dislikes on specific entity
+message CountDislikesRequest {
+  oneof filter {
+    option (buf.validate.oneof).required = true;
+    FilterByUser filter_by_user = 1;
+    FilterByEntity filter_by_entity = 2;
+  }
+}
+
+message CountDislikesResponse {
+  int64 count = 1;
+}
+
+// count dislikes on multiple entities in one call, e.g. for rendering a feed
+message BatchCountDislikesRequest {
+  repeated string entity_arns = 1 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 100
+    unique: true
+    items: {
+      string: {[validation.v1.entity_arn]: true}
+    }
+  }]; // multi tenant id # tenant:entity_type:entity_id
+}
+
+message BatchCountDislikesResponse {
+  map<string, int64> counts = 1; // entity_arn -> count
 }
 
 service DislikeService {
-    rpc Dislike(DislikeRequest) returns (DislikeResponse) {}
-    rpc HasDisliked(HasDislikedRequest) returns (HasDislikedResponse) {}
-    rpc UndoDislike(UndoDislikeRequest) returns (UndoDislikeResponse) {}
-    rpc ListDislikes(ListDislikesRequest) returns (ListDislikesResponse) {}
+  // creates a dislike; removes the user's existing like on the entity, if any
+  rpc Dislike(DislikeRequest) returns (DislikeResponse) {}
+  rpc UndoDislike(UndoDislikeRequest) returns (UndoDislikeResponse) {}
+  rpc HasDisliked(HasDislikedRequest) returns (HasDislikedResponse) {}
+  rpc BatchHasDisliked(BatchHasDislikedRequest) returns (BatchHasDislikedResponse) {}
+  rpc ListDislikes(ListDislikesRequest) returns (ListDislikesResponse) {}
+  rpc CountDislikes(CountDislikesRequest) returns (CountDislikesResponse) {}
+  rpc BatchCountDislikes(BatchCountDislikesRequest) returns (BatchCountDislikesResponse) {}
 }

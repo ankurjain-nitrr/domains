@@ -2,11 +2,16 @@ syntax = "proto3";
 
 package commons.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
 // TimeRange represents a range of time with start and end epoch time
 message TimeRange {
-    google.protobuf.Timestamp start_time = 1;
-    google.protobuf.Timestamp end_time = 2;
+  option (buf.validate.message).cel = {
+    id: "time_range.ordered"
+    message: "start_time must not be after end_time"
+    expression: "!has(this.start_time) || !has(this.end_time) || this.start_time <= this.end_time"
+  };
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
 }
-

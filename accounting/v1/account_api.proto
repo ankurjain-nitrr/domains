@@ -3,43 +3,50 @@ syntax = "proto3";
 package accounting.v1;
 
 import "accounting/v1/account.proto";
+import "buf/validate/validate.proto";
 
 message CreateAccountRequest {
-    accounting.v1.Account account = 1;
+  accounting.v1.Account account = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "account.owner"
+      message: "owner is required"
+      expression: "has(this.user_id) || has(this.business_entity_id)"
+    }
+  ];
 }
 
 message CreateAccountResponse {
-    accounting.v1.Account account = 1;
+  accounting.v1.Account account = 1;
 }
 
 message GetAccountRequest {
-    string account_id = 1;
+  string account_id = 1 [(buf.validate.field).required = true];
 }
 
 message GetAccountResponse {
-    accounting.v1.Account account = 1;
+  accounting.v1.Account account = 1;
 }
 
 message UpdateAccountRequest {
-    accounting.v1.Account account = 2;
+  accounting.v1.Account account = 2 [(buf.validate.field).required = true];
 }
 
 message UpdateAccountResponse {
-    accounting.v1.Account account = 1;
+  accounting.v1.Account account = 1;
 }
 
 message DeleteAccountRequest {
-    string account_id = 1;
+  string account_id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteAccountResponse {
-    accounting.v1.Account account = 1;
+  accounting.v1.Account account = 1;
 }
 
 service AccountService {
-    rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}
-    rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {}
-    rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse) {}
-    rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {}
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {}
+  rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse) {}
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {}
 }
-

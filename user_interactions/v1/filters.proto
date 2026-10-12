@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package user_interactions.v1;
+
+import "buf/validate/validate.proto";
+import "validation/v1/rules.proto";
+
+// FilterByUser selects interactions made by a user
+message FilterByUser {
+  string user_id = 1 [(buf.validate.field).required = true]; // references id from iam service
+  string tenant = 2;
+  string entity_type = 3; // optional
+}
+
+// FilterByEntity selects interactions made on an entity
+message FilterByEntity {
+  string entity_arn = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ]; // multi tenant id # tenant:entity_type:entity_id
+}

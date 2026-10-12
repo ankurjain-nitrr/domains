@@ -21,7 +21,7 @@ JARS_DIR := $(GEN_DIR)/build/jars
 .DEFAULT_GOAL := all
 
 # PHONY targets
-.PHONY: all generate lint clean help init install-buf install-protoc-gen-go install-protoc-gen-java check_buf check_go check_java check_os install-protoc-gen-grpc-java install-protoc-gen-go-grpc compile-java create-jars check_brew check_maven install-maven deps
+.PHONY: all generate lint format clean help init install-buf install-protoc-gen-go install-protoc-gen-java check_buf check_go check_java check_os install-protoc-gen-grpc-java install-protoc-gen-go-grpc compile-java create-jars check_brew check_maven install-maven deps
 
 # Default target: clean, lint, and generate
 all: clean lint deps generate
@@ -90,6 +90,12 @@ lint: check_buf
 	@buf lint
 	@echo "Linting complete."
 
+# Format proto files in place
+format: check_buf
+	@echo "Formatting proto files..."
+	@buf format -w
+	@echo "Formatting complete."
+
 # Clean generated files
 clean:
 	@echo "Cleaning generated files..."
@@ -106,6 +112,7 @@ help:
 	@echo "  install-protoc-gen-java: Install protoc-gen-java (macOS only)"
 	@echo "  generate             : Generate code from proto files"
 	@echo "  lint                 : Lint proto files"
+	@echo "  format               : Format proto files in place"
 	@echo "  clean                : Remove generated files"
 	@echo "  help                 : Show this help message"
 	@echo ""

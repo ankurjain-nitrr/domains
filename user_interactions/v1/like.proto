@@ -2,72 +2,141 @@ syntax = "proto3";
 
 package user_interactions.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "user_interactions/v1/filters.proto";
+import "validation/v1/rules.proto";
 
-// multi tenant like capabilites 
-// arn format references # movies can be liked by users
+// multi tenant like capabilities, arn format references # movies can be liked by users
+//
+// Likes and dislikes are mutually exclusive: a user can either like or dislike an entity, not both.
+// Creating a like removes the user's existing dislike on the same entity in the same operation.
+// Undoing a like does not restore a previously removed dislike.
 message Like {
-    string user_id = 1; // references id from iam service
-    string entity_arn = 2; // tenent:entity_type:entity_id
-    google.protobuf.Timestamp created_at = 3;
+  string id = 1;
+  string user_id = 2; // references id from iam service
+  string entity_arn = 3 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ]; // multi tenant id # tenant:entity_type:entity_id
+  google.protobuf.Timestamp create_time = 4;
 }
 
+// removes the user's existing dislike on the same entity, if any
 message LikeRequest {
-    Like like = 1;
+  Like like = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "like.user_id"
+      message: "user_id is required"
+      expression: "this.user_id != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "like.entity_arn"
+      message: "entity_arn is required"
+      expression: "this.entity_arn != ''"
+    }
+  ];
 }
 
 message LikeResponse {
-    Like like = 1;
-}
-
-message HasLikedRequest {
-    string user_id = 1;
-    string entity_arn = 2; // tenent:entity_type:entity_id
-}
-
-message HasLikedResponse {
-    Like like = 1;
+  Like like = 1;
 }
 
 message UndoLikeRequest {
-    string user_id = 1;
-    string entity_arn = 2; // tenent:entity_type:entity_id
+  string user_id = 1 [(buf.validate.field).required = true];
+  string entity_arn = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ]; // multi tenant id # tenant:entity_type:entity_id
 }
 
+// returns the removed like
 message UndoLikeResponse {
-    Like like = 1;
+  Like like = 1;
 }
 
+message HasLikedRequest {
+  string user_id = 1 [(buf.validate.field).required = true];
+  string entity_arn = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ]; // multi tenant id # tenant:entity_type:entity_id
+}
 
+message HasLikedResponse {
+  bool has_liked = 1;
+}
 
+// check multiple entities for one user in one call, e.g. for rendering a feed
+message BatchHasLikedRequest {
+  string user_id = 1 [(buf.validate.field).required = true];
+  repeated string entity_arns = 2 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 100
+    unique: true
+    items: {
+      string: {[validation.v1.entity_arn]: true}
+    }
+  }]; // multi tenant id # tenant:entity_type:entity_id
+}
+
+message BatchHasLikedResponse {
+  map<string, bool> has_liked = 1; // entity_arn -> whether the user has liked it
+}
+
+// list all likes by user or likes on specific entity
 message ListLikesRequest {
-    oneof request {
-        FilterByUser filter_by_user = 1;
-        FilterByEntity filter_by_entity = 2;
-    }
-    int64 page_size = 3;
-    string page_token = 4;
-
-    // list all likes by user or likes on specific entity, ensure pagination, uses oneof
-    message FilterByUser {
-        string user_id = 1;
-        string tenant = 2;
-        string entity_type = 3; // optional
-    }
-
-    message FilterByEntity {
-        string entity_arn = 1; // tenent:entity_type:entity_id
-    }
+  oneof filter {
+    option (buf.validate.oneof).required = true;
+    FilterByUser filter_by_user = 1;
+    FilterByEntity filter_by_entity = 2;
+  }
+  int64 page_size = 3 [(buf.validate.field).int64.gte = 0];
+  string page_token = 4;
 }
 
 message ListLikesResponse {
-    repeated Like likes = 1;
-    string next_page_token = 2;
+  repeated Like likes = 1;
+  string next_page_token = 2;
+}
+
+// count likes by user or likes on specific entity
+message CountLikesRequest {
+  oneof filter {
+    option (buf.validate.oneof).required = true;
+    FilterByUser filter_by_user = 1;
+    FilterByEntity filter_by_entity = 2;
+  }
+}
+
+message CountLikesResponse {
+  int64 count = 1;
+}
+
+// count likes on multiple entities in one call, e.g. for rendering a feed
+message BatchCountLikesRequest {
+  repeated string entity_arns = 1 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 100
+    unique: true
+    items: {
+      string: {[validation.v1.entity_arn]: true}
+    }
+  }]; // multi tenant id # tenant:entity_type:entity_id
+}
+
+message BatchCountLikesResponse {
+  map<string, int64> counts = 1; // entity_arn -> count
 }
 
 service LikeService {
-    rpc Like(LikeRequest) returns (LikeResponse) {}
-    rpc HasLiked(HasLikedRequest) returns (HasLikedResponse) {}
-    rpc UndoLike(UndoLikeRequest) returns (UndoLikeResponse) {}
-    rpc ListLikes(ListLikesRequest) returns (ListLikesResponse) {}
+  // creates a like; removes the user's existing dislike on the entity, if any
+  rpc Like(LikeRequest) returns (LikeResponse) {}
+  rpc UndoLike(UndoLikeRequest) returns (UndoLikeResponse) {}
+  rpc HasLiked(HasLikedRequest) returns (HasLikedResponse) {}
+  rpc BatchHasLiked(BatchHasLikedRequest) returns (BatchHasLikedResponse) {}
+  rpc ListLikes(ListLikesRequest) returns (ListLikesResponse) {}
+  rpc CountLikes(CountLikesRequest) returns (CountLikesResponse) {}
+  rpc BatchCountLikes(BatchCountLikesRequest) returns (BatchCountLikesResponse) {}
 }

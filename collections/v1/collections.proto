@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package collections.v1;
+
+// Wrappers for repeated scalars, for use where a repeated field is not allowed directly (e.g. inside a oneof)
+
+message StringCollection {
+  repeated string values = 1;
+}
+
+message Int32Collection {
+  repeated int32 values = 1;
+}
+
+message Int64Collection {
+  repeated int64 values = 1;
+}
+
+message DoubleCollection {
+  repeated double values = 1;
+}
+
+message BoolCollection {
+  repeated bool values = 1;
+}

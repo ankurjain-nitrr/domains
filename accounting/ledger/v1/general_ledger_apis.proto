@@ -3,83 +3,123 @@ syntax = "proto3";
 package accounting.ledger.v1;
 
 import "accounting/ledger/v1/general_ledger.proto";
+import "buf/validate/validate.proto";
 
 message CreateGeneralLedgerRequest {
-    accounting.ledger.v1.GeneralLedger general_ledger = 1;
+  accounting.ledger.v1.GeneralLedger general_ledger = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "general_ledger.tenant_id"
+      message: "tenant_id is required"
+      expression: "this.tenant_id != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "general_ledger.account_id"
+      message: "account_id is required"
+      expression: "this.account_id != ''"
+    }
+  ];
 }
 
 message CreateGeneralLedgerResponse {
-    accounting.ledger.v1.GeneralLedger general_ledger = 1;
+  accounting.ledger.v1.GeneralLedger general_ledger = 1;
 }
 
 message GetGeneralLedgerRequest {
-    string general_ledger_id = 1;
+  string general_ledger_id = 1 [(buf.validate.field).required = true];
 }
 
 message GetGeneralLedgerResponse {
-    accounting.ledger.v1.GeneralLedger general_ledger = 1;
+  accounting.ledger.v1.GeneralLedger general_ledger = 1;
 }
 
 message UpdateGeneralLedgerRequest {
-    string general_ledger_id = 1;
-    accounting.ledger.v1.GeneralLedger general_ledger = 2;
+  string general_ledger_id = 1 [(buf.validate.field).required = true];
+  accounting.ledger.v1.GeneralLedger general_ledger = 2 [(buf.validate.field).required = true];
 }
 
 message UpdateGeneralLedgerResponse {
-    accounting.ledger.v1.GeneralLedger general_ledger = 1;
+  accounting.ledger.v1.GeneralLedger general_ledger = 1;
 }
 
 message DeleteGeneralLedgerRequest {
-    string general_ledger_id = 1;
+  string general_ledger_id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteGeneralLedgerResponse {
-    accounting.ledger.v1.GeneralLedger general_ledger = 1;
+  accounting.ledger.v1.GeneralLedger general_ledger = 1;
 }
 
 // Create general ledger entry
 message CreateGeneralLedgerEntryRequest {
-    accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
+  accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "general_ledger_entry.ledger_id"
+      message: "ledger_id is required"
+      expression: "this.ledger_id != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "general_ledger_entry.account_id"
+      message: "account_id is required"
+      expression: "this.account_id != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "general_ledger_entry.amount"
+      message: "amount is required"
+      expression: "has(this.amount)"
+    },
+    (buf.validate.field).cel = {
+      id: "general_ledger_entry.entry_type"
+      message: "entry_type is required"
+      expression: "this.entry_type != 0"
+    },
+    (buf.validate.field).cel = {
+      id: "general_ledger_entry.general_ledger_type"
+      message: "general_ledger_type is required"
+      expression: "this.general_ledger_type != 0"
+    }
+  ];
 }
 
 message CreateGeneralLedgerEntryResponse {
-    accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
+  accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
 }
 
 message GetGeneralLedgerEntryRequest {
-    string general_ledger_entry_id = 1;
+  string general_ledger_entry_id = 1 [(buf.validate.field).required = true];
 }
 
 message GetGeneralLedgerEntryResponse {
-    accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
+  accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
 }
 
 message UpdateGeneralLedgerEntryRequest {
-    accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 2;
+  accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 2 [(buf.validate.field).required = true];
 }
 
 message UpdateGeneralLedgerEntryResponse {
-    accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
+  accounting.ledger.v1.GeneralLedgerEntry general_ledger_entry = 1;
 }
 
 message ListGeneralLedgerEntriesRequest {
-    string general_ledger_id = 1;
-    int64 page_size = 2;
-    string page_token = 3;
+  string general_ledger_id = 1 [(buf.validate.field).required = true];
+  int64 page_size = 2 [(buf.validate.field).int64.gte = 0];
+  string page_token = 3;
 }
 
 message ListGeneralLedgerEntriesResponse {
-    repeated accounting.ledger.v1.GeneralLedgerEntry general_ledger_entries = 1;
-    string next_page_token = 2;
+  repeated accounting.ledger.v1.GeneralLedgerEntry general_ledger_entries = 1;
+  string next_page_token = 2;
 }
 
 service GeneralLedgerService {
-    rpc CreateGeneralLedger(CreateGeneralLedgerRequest) returns (CreateGeneralLedgerResponse) {}
-    rpc GetGeneralLedger(GetGeneralLedgerRequest) returns (GetGeneralLedgerResponse) {}
-    rpc UpdateGeneralLedger(UpdateGeneralLedgerRequest) returns (UpdateGeneralLedgerResponse) {}
-    rpc DeleteGeneralLedger(DeleteGeneralLedgerRequest) returns (DeleteGeneralLedgerResponse) {}
-    rpc CreateGeneralLedgerEntry(CreateGeneralLedgerEntryRequest) returns (CreateGeneralLedgerEntryResponse) {}
-    rpc GetGeneralLedgerEntry(GetGeneralLedgerEntryRequest) returns (GetGeneralLedgerEntryResponse) {}
-    rpc UpdateGeneralLedgerEntry(UpdateGeneralLedgerEntryRequest) returns (UpdateGeneralLedgerEntryResponse) {}
-    rpc ListGeneralLedgerEntries(ListGeneralLedgerEntriesRequest) returns (ListGeneralLedgerEntriesResponse) {}
+  rpc CreateGeneralLedger(CreateGeneralLedgerRequest) returns (CreateGeneralLedgerResponse) {}
+  rpc GetGeneralLedger(GetGeneralLedgerRequest) returns (GetGeneralLedgerResponse) {}
+  rpc UpdateGeneralLedger(UpdateGeneralLedgerRequest) returns (UpdateGeneralLedgerResponse) {}
+  rpc DeleteGeneralLedger(DeleteGeneralLedgerRequest) returns (DeleteGeneralLedgerResponse) {}
+  rpc CreateGeneralLedgerEntry(CreateGeneralLedgerEntryRequest) returns (CreateGeneralLedgerEntryResponse) {}
+  rpc GetGeneralLedgerEntry(GetGeneralLedgerEntryRequest) returns (GetGeneralLedgerEntryResponse) {}
+  rpc UpdateGeneralLedgerEntry(UpdateGeneralLedgerEntryRequest) returns (UpdateGeneralLedgerEntryResponse) {}
+  rpc ListGeneralLedgerEntries(ListGeneralLedgerEntriesRequest) returns (ListGeneralLedgerEntriesResponse) {}
 }

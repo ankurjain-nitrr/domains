@@ -2,10 +2,19 @@ syntax = "proto3";
 
 package commons.v1;
 
+import "buf/validate/validate.proto";
+import "validation/v1/rules.proto";
+
 // Country code list: https://en.wikipedia.org/wiki/List_of_country_calling_codes
 
 // Phone represents a phone number with country code
 message Phone {
-    string country_code = 1;
-    string number = 2;
+  string country_code = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.(validation.v1.calling_code) = true
+  ];
+  string number = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.pattern = '^[0-9]{4,14}$'
+  ];
 }

@@ -2,69 +2,135 @@ syntax = "proto3";
 
 package user_interactions.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "user_interactions/v1/filters.proto";
+import "validation/v1/rules.proto";
 
+// multi tenant follow capabilities, users can follow any entity (users, brands, content, ...)
 message Follow {
-    string id = 1;
-    string user_id = 2; // references id from iam service
-    string entity_arn = 3; // multi tenant id # tenant:entity_type:entity_id
-    google.protobuf.Timestamp created_at = 4;
+  string id = 1;
+  string user_id = 2; // references id from iam service
+  string entity_arn = 3 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ]; // multi tenant id # tenant:entity_type:entity_id
+  google.protobuf.Timestamp create_time = 4;
 }
 
 message FollowRequest {
-    Follow follow = 1;
+  Follow follow = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "follow.user_id"
+      message: "user_id is required"
+      expression: "this.user_id != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "follow.entity_arn"
+      message: "entity_arn is required"
+      expression: "this.entity_arn != ''"
+    }
+  ];
 }
 
 message FollowResponse {
-    Follow follow = 1;
+  Follow follow = 1;
 }
 
 message UnfollowRequest {
-    string user_id = 1;
-    string entity_arn = 2; // multi tenant id # tenant:entity_type:entity_id
+  string user_id = 1 [(buf.validate.field).required = true];
+  string entity_arn = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ]; // multi tenant id # tenant:entity_type:entity_id
 }
 
+// returns the removed follow
 message UnfollowResponse {
-    Follow follow = 1;
+  Follow follow = 1;
 }
 
 message HasFollowedRequest {
-    string user_id = 1;
-    string entity_arn = 2; // multi tenant id # tenant:entity_type:entity_id
+  string user_id = 1 [(buf.validate.field).required = true];
+  string entity_arn = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ]; // multi tenant id # tenant:entity_type:entity_id
 }
 
 message HasFollowedResponse {
-    bool has_followed = 1;
+  bool has_followed = 1;
 }
 
-// list all follows by user or follows on specific entity, ensure pagination, uses oneof
-message FilterByUser {
-    string user_id = 1;
-    string tenant = 2;
-    string entity_type = 3; // optional
-}
-
-message FilterByEntity {
-    string entity_arn = 1; // multi tenant id # tenant:entity_type:entity_id
-}
-
-message ListFollowsRequest {
-    oneof request {
-        FilterByUser filter_by_user = 1;            
-        FilterByEntity filter_by_entity = 2;
+// check multiple entities for one user in one call, e.g. for rendering a feed
+message BatchHasFollowedRequest {
+  string user_id = 1 [(buf.validate.field).required = true];
+  repeated string entity_arns = 2 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 100
+    unique: true
+    items: {
+      string: {[validation.v1.entity_arn]: true}
     }
-    int64 page_size = 3;
-    string page_token = 4;
+  }]; // multi tenant id # tenant:entity_type:entity_id
+}
+
+message BatchHasFollowedResponse {
+  map<string, bool> has_followed = 1; // entity_arn -> whether the user has followed it
+}
+
+// list all follows by user or follows on specific entity
+message ListFollowsRequest {
+  oneof filter {
+    option (buf.validate.oneof).required = true;
+    FilterByUser filter_by_user = 1;
+    FilterByEntity filter_by_entity = 2;
+  }
+  int64 page_size = 3 [(buf.validate.field).int64.gte = 0];
+  string page_token = 4;
 }
 
 message ListFollowsResponse {
-    repeated Follow follows = 1;
-    string next_page_token = 2;
+  repeated Follow follows = 1;
+  string next_page_token = 2;
+}
+
+// count follows by user or follows on specific entity
+message CountFollowsRequest {
+  oneof filter {
+    option (buf.validate.oneof).required = true;
+    FilterByUser filter_by_user = 1;
+    FilterByEntity filter_by_entity = 2;
+  }
+}
+
+message CountFollowsResponse {
+  int64 count = 1;
+}
+
+// count follows on multiple entities in one call, e.g. for rendering a feed
+message BatchCountFollowsRequest {
+  repeated string entity_arns = 1 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 100
+    unique: true
+    items: {
+      string: {[validation.v1.entity_arn]: true}
+    }
+  }]; // multi tenant id # tenant:entity_type:entity_id
+}
+
+message BatchCountFollowsResponse {
+  map<string, int64> counts = 1; // entity_arn -> count
 }
 
 service FollowService {
-    rpc Follow(FollowRequest) returns (FollowResponse) {}
-    rpc Unfollow(UnfollowRequest) returns (UnfollowResponse) {}
-    rpc HasFollowed(HasFollowedRequest) returns (HasFollowedResponse) {}
-    rpc ListFollows(ListFollowsRequest) returns (ListFollowsResponse) {}
+  rpc Follow(FollowRequest) returns (FollowResponse) {}
+  rpc Unfollow(UnfollowRequest) returns (UnfollowResponse) {}
+  rpc HasFollowed(HasFollowedRequest) returns (HasFollowedResponse) {}
+  rpc BatchHasFollowed(BatchHasFollowedRequest) returns (BatchHasFollowedResponse) {}
+  rpc ListFollows(ListFollowsRequest) returns (ListFollowsResponse) {}
+  rpc CountFollows(CountFollowsRequest) returns (CountFollowsResponse) {}
+  rpc BatchCountFollows(BatchCountFollowsRequest) returns (BatchCountFollowsResponse) {}
 }

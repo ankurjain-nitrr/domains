@@ -2,63 +2,80 @@ syntax = "proto3";
 
 package iam.v1;
 
+import "buf/validate/validate.proto";
+import "google/protobuf/field_mask.proto";
 import "iam/v1/user.proto";
 
 message CreateUserRequest {
-    User user = 1;
+  User user = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "user.name"
+      message: "name is required"
+      expression: "this.name != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "user.contact"
+      message: "email or phone is required"
+      expression: "this.email != '' || size(this.phones) > 0"
+    }
+  ];
 }
 
 message CreateUserResponse {
-    User user = 1;
+  User user = 1;
 }
 
 message GetUserRequest {
-    string id = 1;
+  string id = 1 [(buf.validate.field).required = true];
 }
 
 message GetUserResponse {
-    User user = 1;
+  User user = 1;
 }
 
+// roles cannot be updated here, use AssignRole / RemoveRole
 message UpdateUserRequest {
-    User user = 1;
+  User user = 1 [(buf.validate.field).required = true];
+  // fields to update; if omitted, all fields set in user are updated (AIP-134)
+  google.protobuf.FieldMask update_mask = 2;
 }
 
 message UpdateUserResponse {
-    User user = 1;
+  User user = 1;
 }
 
 message DeleteUserRequest {
-    string id = 1;
+  string id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteUserResponse {
-    User user = 1;
+  User user = 1;
 }
 
 message AssignRoleRequest {
-    string user_id = 1;
-    string role_id = 2;
+  string user_id = 1 [(buf.validate.field).required = true];
+  string role_id = 2 [(buf.validate.field).required = true];
 }
 
 message AssignRoleResponse {
-    User user = 1;
+  User user = 1;
 }
 
 message RemoveRoleRequest {
-    string user_id = 1;
-    string role_id = 2;
+  string user_id = 1 [(buf.validate.field).required = true];
+  string role_id = 2 [(buf.validate.field).required = true];
 }
 
 message RemoveRoleResponse {
-    User user = 1;
+  User user = 1;
 }
 
 service UserService {
-    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
-    rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
-    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
-    rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {} // marks the user as inactive
-    rpc AssignRole(AssignRoleRequest) returns (AssignRoleResponse) {}
-    rpc RemoveRole(RemoveRoleRequest) returns (RemoveRoleResponse) {}
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {} // marks the user as inactive
+  rpc AssignRole(AssignRoleRequest) returns (AssignRoleResponse) {}
+  rpc RemoveRole(RemoveRoleRequest) returns (RemoveRoleResponse) {}
 }
