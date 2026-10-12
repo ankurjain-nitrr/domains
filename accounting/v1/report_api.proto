@@ -1,8 +1,9 @@
 syntax = "proto3";
 
-package accounting.ledger.v1;
+package accounting.v1;
 
-import "accounting/ledger/v1/general_ledger.proto";
+import "accounting/v1/ledger.proto";
+import "accounting/v1/voucher.proto";
 import "buf/validate/validate.proto";
 import "google/type/date.proto";
 import "google/type/money.proto";
@@ -29,8 +30,8 @@ message GroupBalance {
 
 // Request message for ReportService.GetTrialBalance.
 message GetTrialBalanceRequest {
-  // Id of the account (books).
-  string account_id = 1 [(buf.validate.field).required = true];
+  // Id of the book.
+  string book_id = 1 [(buf.validate.field).required = true];
   // Balances as of the end of this day. Unset means today.
   google.type.Date date = 2;
 }
@@ -47,8 +48,8 @@ message GetTrialBalanceResponse {
 
 // Request message for ReportService.GetProfitAndLoss.
 message GetProfitAndLossRequest {
-  // Id of the account (books).
-  string account_id = 1 [(buf.validate.field).required = true];
+  // Id of the book.
+  string book_id = 1 [(buf.validate.field).required = true];
   // First day of the period. Unset means the start of the current financial year.
   google.type.Date start_date = 2;
   // Last day of the period. Unset means today.
@@ -67,8 +68,8 @@ message GetProfitAndLossResponse {
 
 // Request message for ReportService.GetBalanceSheet.
 message GetBalanceSheetRequest {
-  // Id of the account (books).
-  string account_id = 1 [(buf.validate.field).required = true];
+  // Id of the book.
+  string book_id = 1 [(buf.validate.field).required = true];
   // Balances as of the end of this day. Unset means today.
   google.type.Date date = 2;
 }
@@ -77,7 +78,7 @@ message GetBalanceSheetRequest {
 message GetBalanceSheetResponse {
   // Totals of asset and liability groups.
   repeated GroupBalance group_balances = 1;
-  // Profit since the books began, shown with liabilities. Negative for a loss.
+  // Profit since the book began, shown with liabilities. Negative for a loss.
   google.type.Money profit_and_loss = 2;
   // Total assets.
   google.type.Money total_assets = 3;
@@ -98,7 +99,7 @@ message LedgerStatementLine {
   // Narration of the voucher.
   string narration = 5;
   // Debit or credit to this ledger.
-  EntryType entry_type = 6;
+  Side side = 6;
   // Amount of the entry.
   google.type.Money amount = 7;
   // Balance of the ledger after this entry.
@@ -151,10 +152,10 @@ message OutstandingBill {
 
 // Request message for ReportService.ListOutstandingBills.
 message ListOutstandingBillsRequest {
-  // Id of the account (books).
-  string account_id = 1 [(buf.validate.field).required = true];
-  // DEBIT for receivables (owed to the books), CREDIT for payables.
-  EntryType side = 2 [
+  // Id of the book.
+  string book_id = 1 [(buf.validate.field).required = true];
+  // DEBIT for receivables (owed to the book), CREDIT for payables.
+  Side side = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).enum.defined_only = true
   ];
@@ -176,7 +177,7 @@ message ListOutstandingBillsResponse {
   string next_page_token = 2;
 }
 
-// Financial reports over an account's active vouchers, as in Tally.
+// Financial reports over a book's active vouchers, as in Tally.
 service ReportService {
   // Gets the trial balance: every ledger's closing balance.
   rpc GetTrialBalance(GetTrialBalanceRequest) returns (GetTrialBalanceResponse) {}

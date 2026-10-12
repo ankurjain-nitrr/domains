@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package accounting.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "google/type/money.proto";
+import "validation/v1/rules.proto";
+
+// Side of a double-entry amount.
+enum Side {
+  // Unspecified. Not a valid value.
+  SIDE_UNSPECIFIED = 0;
+  // Debit.
+  SIDE_DEBIT = 1;
+  // Credit.
+  SIDE_CREDIT = 2;
+}
+
+// An amount on the debit or credit side, e.g. a ledger balance.
+message Balance {
+  // The amount, not negative, in the book's currency.
+  google.type.Money amount = 1 [(buf.validate.field).cel = {
+    id: "balance.amount_not_negative"
+    message: "amount must not be negative"
+    expression: "this.units >= 0 && this.nanos >= 0"
+  }];
+  // Debit or credit.
+  Side side = 2 [(buf.validate.field).enum.defined_only = true];
+}
+
+// A group in the chart of accounts (Tally's group), e.g. Sundry Debtors under Current Assets. Every book starts with
+// Tally's 28 predefined groups; custom groups go under them and take their parent's nature and affects_gross_profit.
+message Group {
+  // Nature of a group, which decides whether it is in the balance sheet or the profit and loss account.
+  enum Nature {
+    // Unspecified. Not a valid value.
+    NATURE_UNSPECIFIED = 0;
+    // Asset, in the balance sheet.
+    NATURE_ASSET = 1;
+    // Liability, including capital, in the balance sheet.
+    NATURE_LIABILITY = 2;
+    // Income, in the profit and loss account.
+    NATURE_INCOME = 3;
+    // Expense, in the profit and loss account.
+    NATURE_EXPENSE = 4;
+  }
+
+  // Unique identifier of the group.
+  string id = 1;
+  // Id of the book the group is in.
+  string book_id = 2;
+  // Name of the group, unique in the book.
+  string name = 3;
+  // Id of the parent group. Empty for a primary group.
+  string parent_id = 4;
+  // Nature of the group. Output only: predefined, or taken from the parent.
+  Nature nature = 5 [(buf.validate.field).enum.defined_only = true];
+  // Whether its ledgers count toward gross profit, as sales, purchases and direct incomes and expenses do. Output
+  // only: predefined, or taken from the parent.
+  bool affects_gross_profit = 6;
+  // Whether it is one of Tally's predefined groups, which can't be updated or deleted. Output only.
+  bool predefined = 7;
+  // Time the group was created. Output only.
+  google.protobuf.Timestamp create_time = 8;
+  // Time the group was last updated. Output only.
+  google.protobuf.Timestamp update_time = 9;
+}
+
+// A ledger (Tally's ledger) under a group, e.g. a bank, a customer or Sales.
+message Ledger {
+  // Unique identifier of the ledger.
+  string id = 1;
+  // Id of the book the ledger is in.
+  string book_id = 2;
+  // Name of the ledger, unique in the book.
+  string name = 3;
+  // Id of the group it is under.
+  string group_id = 4;
+  // Balance at the book's begin date.
+  Balance opening_balance = 5;
+  // Balance after every active voucher. Output only.
+  Balance closing_balance = 6;
+  // Customer or supplier the ledger is for, e.g. shop:BusinessEntity:b_1. Usually under Sundry Debtors or Creditors.
+  string party_arn = 7 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ];
+  // Whether entries are tracked against bills (bill-wise details), for outstanding receivables and payables.
+  bool bill_wise = 8;
+  // Time the ledger was created. Output only.
+  google.protobuf.Timestamp create_time = 9;
+  // Time the ledger was last updated. Output only.
+  google.protobuf.Timestamp update_time = 10;
+}

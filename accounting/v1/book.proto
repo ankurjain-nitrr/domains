@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package accounting.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "google/type/date.proto";
+import "validation/v1/rules.proto";
+
+// A set of books of accounts (Tally's company), owned by a user or a business entity. Creating one seeds Tally's 28
+// predefined groups (see docs/accounting.md).
+message Book {
+  // Unique identifier of the book.
+  string id = 1;
+  // Owner of the book: a user or a business entity, e.g. shop:BusinessEntity:b_1. Set at creation.
+  string owner_arn = 2 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true,
+    (buf.validate.field).string.(validation.v1.owner_arn) = true
+  ];
+  // Name of the book, e.g. the business name.
+  string name = 3;
+  // ISO 4217 currency of every amount in the book, e.g. INR. Set at creation.
+  string currency_code = 4 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = "^[A-Z]{3}$"
+  ];
+  // Month the financial year starts, 1 to 12. 0 means 4 (April), as in India.
+  int32 financial_year_start_month = 5 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 12
+  }];
+  // First day of the book. Vouchers can't be dated earlier.
+  google.type.Date begin_date = 6;
+  // Vouchers dated on or before this day can't be created, updated or cancelled. Unset locks nothing.
+  google.type.Date locked_until = 7;
+  // Time the book was created. Output only.
+  google.protobuf.Timestamp create_time = 8;
+  // Time the book was last updated. Output only.
+  google.protobuf.Timestamp update_time = 9;
+}

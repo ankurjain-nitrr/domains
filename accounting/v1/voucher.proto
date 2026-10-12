@@ -1,0 +1,137 @@
+syntax = "proto3";
+
+package accounting.v1;
+
+import "accounting/v1/ledger.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "google/type/date.proto";
+import "google/type/money.proto";
+import "validation/v1/rules.proto";
+
+// Kind of accounting voucher, as in Tally.
+enum VoucherType {
+  // Unspecified. Not a valid value.
+  VOUCHER_TYPE_UNSPECIFIED = 0;
+  // Cash deposited in or withdrawn from a bank, or a transfer between cash and bank ledgers only.
+  VOUCHER_TYPE_CONTRA = 1;
+  // Money paid out: credits a cash or bank ledger.
+  VOUCHER_TYPE_PAYMENT = 2;
+  // Money received: debits a cash or bank ledger.
+  VOUCHER_TYPE_RECEIPT = 3;
+  // Adjustment with no cash or bank, e.g. depreciation or a provision.
+  VOUCHER_TYPE_JOURNAL = 4;
+  // Sale of goods or services.
+  VOUCHER_TYPE_SALES = 5;
+  // Purchase of goods or services.
+  VOUCHER_TYPE_PURCHASE = 6;
+  // Purchase return or a charge to a supplier, debiting the supplier.
+  VOUCHER_TYPE_DEBIT_NOTE = 7;
+  // Sales return or an allowance to a customer, crediting the customer.
+  VOUCHER_TYPE_CREDIT_NOTE = 8;
+}
+
+// How a voucher entry creates or settles bills of a bill-wise ledger.
+message BillAllocation {
+  // Kind of bill reference.
+  enum Type {
+    // Unspecified. Not a valid value.
+    TYPE_UNSPECIFIED = 0;
+    // Creates a bill, e.g. on a sales or purchase voucher.
+    TYPE_NEW_REFERENCE = 1;
+    // Settles an existing bill, e.g. on a receipt or payment.
+    TYPE_AGAINST_REFERENCE = 2;
+    // Paid or received before the bill exists; settled when it is raised.
+    TYPE_ADVANCE = 3;
+    // Not tied to any bill.
+    TYPE_ON_ACCOUNT = 4;
+  }
+
+  option (buf.validate.message).cel = {
+    id: "bill_allocation.name"
+    message: "name is required, except for ON_ACCOUNT"
+    expression: "this.type == 0 || this.type == 4 || this.name != ''"
+  };
+
+  // Kind of reference.
+  Type type = 1 [(buf.validate.field).enum.defined_only = true];
+  // Bill name, e.g. the invoice number. Empty for ON_ACCOUNT.
+  string name = 2;
+  // Due date of a new bill.
+  google.type.Date due_date = 3;
+  // Amount allocated to the bill.
+  google.type.Money amount = 4 [(buf.validate.field).cel = {
+    id: "bill_allocation.amount_positive"
+    message: "amount must be positive"
+    expression: "this.units > 0 || (this.units == 0 && this.nanos > 0)"
+  }];
+}
+
+// One debit or credit line of a voucher.
+message VoucherEntry {
+  // Id of the ledger debited or credited.
+  string ledger_id = 1 [(buf.validate.field).string.min_len = 1];
+  // Debit or credit.
+  Side side = 2 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+  // Amount, in the book's currency.
+  google.type.Money amount = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "voucher_entry.amount_positive"
+      message: "amount must be positive"
+      expression: "this.units > 0 || (this.units == 0 && this.nanos > 0)"
+    }
+  ];
+  // Bills it creates or settles, for a bill-wise ledger. Allocations add up to amount.
+  repeated BillAllocation bill_allocations = 4;
+}
+
+// An accounting voucher (Tally's voucher): one balanced transaction of two or more entries.
+message Voucher {
+  // Lifecycle of a voucher.
+  enum State {
+    // Unspecified. Not a valid value.
+    STATE_UNSPECIFIED = 0;
+    // Counts toward balances and reports.
+    STATE_ACTIVE = 1;
+    // Cancelled: keeps its number, no longer counts.
+    STATE_CANCELLED = 2;
+  }
+
+  option (buf.validate.message).cel = {
+    id: "voucher.entries_both_sides"
+    message: "a voucher needs at least one debit and one credit entry"
+    expression: "this.entries.size() == 0 || (this.entries.exists(e, e.side == 1) && this.entries.exists(e, e.side == 2))"
+  };
+
+  // Unique identifier of the voucher.
+  string id = 1;
+  // Id of the book it is in.
+  string book_id = 2;
+  // Kind of voucher.
+  VoucherType type = 3 [(buf.validate.field).enum.defined_only = true];
+  // Number, sequential per type and financial year. Output only.
+  string number = 4;
+  // Accounting date.
+  google.type.Date date = 5;
+  // Narration.
+  string narration = 6;
+  // External reference, e.g. the supplier's invoice number.
+  string reference = 7;
+  // Entity that produced it, e.g. shop:Order:o_1.
+  string source_arn = 8 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.(validation.v1.entity_arn) = true
+  ];
+  // Debit and credit entries. Debits add up to credits.
+  repeated VoucherEntry entries = 9;
+  // Lifecycle state. Set by CreateVoucher and CancelVoucher. Output only.
+  State state = 10 [(buf.validate.field).enum.defined_only = true];
+  // Time the voucher was created. Output only.
+  google.protobuf.Timestamp create_time = 11;
+  // Time the voucher was last updated. Output only.
+  google.protobuf.Timestamp update_time = 12;
+}

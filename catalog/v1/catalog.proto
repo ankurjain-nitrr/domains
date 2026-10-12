@@ -45,15 +45,11 @@ enum AttributeType {
   // Decimal number.
   ATTRIBUTE_TYPE_DECIMAL = 4;
   // Group of sub-attributes, see AttributeConstraints.sub_attributes.
-  ATTRIBUTE_TYPE_COMPLEX = 6;
+  ATTRIBUTE_TYPE_COMPLEX = 5;
   // Reference to an existing IdentifiedComplexValue.
-  ATTRIBUTE_TYPE_REFERENCE = 7;
+  ATTRIBUTE_TYPE_REFERENCE = 6;
   // Image.
-  ATTRIBUTE_TYPE_IMAGE = 8;
-
-  // collection is a cardinality (rules.repeated.min_items / max_items), not a type
-  reserved 5;
-  reserved "ATTRIBUTE_TYPE_COLLECTION";
+  ATTRIBUTE_TYPE_IMAGE = 7;
 }
 
 // Attribute is a key-value pair that can be used to filter the catalog
@@ -69,15 +65,11 @@ message Attribute {
   // Constraints for the attribute.
   AttributeConstraints attribute_constraints = 5 [(buf.validate.field).required = true];
   // Whether the attribute is unique.
-  bool is_unique = 7;
+  bool is_unique = 6;
   // Whether the attribute is visible to the user.
-  bool is_visible = 8;
+  bool is_visible = 7;
   // Whether the attribute is active.
-  bool is_active = 9;
-
-  // replaced by AttributeConstraints.rules.required
-  reserved 6;
-  reserved "is_required";
+  bool is_active = 8;
 }
 
 // AttributeConstraints defines the type of an attribute and the rules its values must satisfy.
@@ -114,7 +106,7 @@ message AttributeConstraints {
     message: "rules.repeated.items type must match attribute_type"
     expression:
       "!has(this.rules.repeated.items.string) && !has(this.rules.repeated.items.int64) && !has(this.rules.repeated.items.double) && !has(this.rules.repeated.items.bool)"
-      " || (this.attribute_type in [1, 7] && has(this.rules.repeated.items.string))"
+      " || (this.attribute_type in [1, 6] && has(this.rules.repeated.items.string))"
       " || (this.attribute_type == 2 && has(this.rules.repeated.items.int64))"
       " || (this.attribute_type == 4 && has(this.rules.repeated.items.double))"
       " || (this.attribute_type == 3 && has(this.rules.repeated.items.bool))"
@@ -122,7 +114,7 @@ message AttributeConstraints {
   option (buf.validate.message).cel = {
     id: "attribute_constraints.sub_attributes"
     message: "sub_attributes are required for COMPLEX attributes and not allowed otherwise"
-    expression: "(this.attribute_type == 6) == (size(this.sub_attributes) > 0)"
+    expression: "(this.attribute_type == 5) == (size(this.sub_attributes) > 0)"
   };
 
   // Type of the attribute.
@@ -131,13 +123,9 @@ message AttributeConstraints {
     not_in: [0]
   }];
   // Rules for the attribute's values, see above.
-  buf.validate.FieldRules rules = 9;
+  buf.validate.FieldRules rules = 2;
   // Attributes of a COMPLEX attribute.
-  repeated Attribute sub_attributes = 10;
-
-  // replaced by rules
-  reserved 2 to 8;
-  reserved "text_attribute_constraints", "number_attribute_constraints", "decimal_attribute_constraints", "collection_attribute_constraints", "complex_attribute_constraints", "image_attribute_constraints", "count_constraints";
+  repeated Attribute sub_attributes = 3;
 }
 
 // AttributeValue holds the values of an attribute; a single-valued attribute holds a list of one

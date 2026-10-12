@@ -17,6 +17,4 @@ message Phone {
     (buf.validate.field).required = true,
     (buf.validate.field).string.pattern = '^[0-9]{4,14}$'
   ];
-
-  reserved "country_code";
 }

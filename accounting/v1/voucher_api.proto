@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package accounting.v1;
+
+import "accounting/v1/voucher.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/field_mask.proto";
+import "google/type/date.proto";
+
+// Fails with INVALID_ARGUMENT if debits don't equal credits, entries don't fit the voucher type (e.g. a contra
+// between ledgers that aren't cash or bank), amounts aren't in the book's currency or bill allocations don't add up;
+// FAILED_PRECONDITION if the date is before the book's begin_date or on or before its locked_until.
+message CreateVoucherRequest {
+  // The voucher to create. Its number and state are set by the server.
+  Voucher voucher = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "voucher.book_id"
+      message: "book_id is required"
+      expression: "this.book_id != ''"
+    },
+    (buf.validate.field).cel = {
+      id: "voucher.type"
+      message: "type is required"
+      expression: "this.type != 0"
+    },
+    (buf.validate.field).cel = {
+      id: "voucher.date"
+      message: "date is required"
+      expression: "has(this.date)"
+    },
+    (buf.validate.field).cel = {
+      id: "voucher.entries"
+      message: "entries are required"
+      expression: "this.entries.size() > 0"
+    }
+  ];
+}
+
+// Response message for VoucherService.CreateVoucher.
+message CreateVoucherResponse {
+  // The created voucher, in STATE_ACTIVE.
+  Voucher voucher = 1;
+}
+
+// Request message for VoucherService.GetVoucher.
+message GetVoucherRequest {
+  // Id of the voucher to get.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for VoucherService.GetVoucher.
+message GetVoucherResponse {
+  // The requested voucher.
+  Voucher voucher = 1;
+}
+
+// Same rules as CreateVoucher, for both the old and the new date; a cancelled voucher can't be updated.
+message UpdateVoucherRequest {
+  // The voucher to update. Its id identifies the voucher.
+  Voucher voucher = 1 [(buf.validate.field).required = true];
+  // fields to update; if omitted, all fields set in voucher are updated (AIP-134)
+  //
+  // Only date, narration, reference and entries are updated.
+  google.protobuf.FieldMask update_mask = 2 [(buf.validate.field).cel = {
+    id: "update_voucher.update_mask"
+    message: "only date, narration, reference and entries can be updated"
+    expression: "this.paths.all(p, p in ['date', 'narration', 'reference', 'entries'])"
+  }];
+}
+
+// Response message for VoucherService.UpdateVoucher.
+message UpdateVoucherResponse {
+  // The updated voucher.
+  Voucher voucher = 1;
+}
+
+// Request message for VoucherService.CancelVoucher.
+message CancelVoucherRequest {
+  // Id of the voucher to cancel.
+  string id = 1 [(buf.validate.field).required = true];
+}
+
+// Response message for VoucherService.CancelVoucher.
+message CancelVoucherResponse {
+  // The cancelled voucher.
+  Voucher voucher = 1;
+}
+
+// Request message for VoucherService.ListVouchers. Listing by date gives Tally's Day Book.
+message ListVouchersRequest {
+  // Id of the book whose vouchers to list.
+  string book_id = 1 [(buf.validate.field).required = true];
+  // Only vouchers of this type.
+  VoucherType type = 2 [(buf.validate.field).enum.defined_only = true];
+  // Only vouchers with an entry for this ledger.
+  string ledger_id = 3;
+  // Only vouchers dated on or after this day.
+  google.type.Date start_date = 4;
+  // Only vouchers dated on or before this day.
+  google.type.Date end_date = 5;
+  // Only vouchers in this state.
+  Voucher.State state = 6 [(buf.validate.field).enum.defined_only = true];
+  // Maximum number of results to return. The server applies a default and a maximum.
+  int64 page_size = 7 [(buf.validate.field).int64.gte = 0];
+  // Page token from a previous response's next_page_token. Empty for the first page.
+  string page_token = 8;
+}
+
+// Response message for VoucherService.ListVouchers.
+message ListVouchersResponse {
+  // The vouchers on this page, by date then number.
+  repeated Voucher vouchers = 1;
+  // Token for the next page. Empty when there are no more results.
+  string next_page_token = 2;
+}
+
+// Records a book's transactions as vouchers.
+service VoucherService {
+  // Creates a voucher.
+  rpc CreateVoucher(CreateVoucherRequest) returns (CreateVoucherResponse) {}
+  // Gets a voucher by id.
+  rpc GetVoucher(GetVoucherRequest) returns (GetVoucherResponse) {}
+  // Updates a voucher.
+  rpc UpdateVoucher(UpdateVoucherRequest) returns (UpdateVoucherResponse) {}
+  // Cancels a voucher: it keeps its number and stops counting toward balances. Fails with FAILED_PRECONDITION if
+  // its date is on or before the book's locked_until.
+  rpc CancelVoucher(CancelVoucherRequest) returns (CancelVoucherResponse) {}
+  // Lists vouchers, a page at a time.
+  rpc ListVouchers(ListVouchersRequest) returns (ListVouchersResponse) {}
+}

@@ -29,33 +29,29 @@ message BankAccount {
   }
 
   // Unique identifier of the bank account.
-  string id = 6;
+  string id = 1;
   // Owner of the account: a user (with a valid KYC) or a business entity, e.g. shop:User:u_1.
-  string owner_arn = 7 [
+  string owner_arn = 2 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.entity_arn) = true,
     (buf.validate.field).string.(validation.v1.owner_arn) = true
   ];
   // Account number, 9 to 18 digits.
-  string account_number = 2 [
+  string account_number = 3 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.pattern = '^[0-9]{9,18}$'
   ];
   // Ifsc code of the bank branch.
-  string ifsc_code = 3 [
+  string ifsc_code = 4 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.ifsc) = true
   ];
   // Type of the account.
-  AccountType account_type = 4 [(buf.validate.field).enum.defined_only = true];
+  AccountType account_type = 5 [(buf.validate.field).enum.defined_only = true];
   // Lifecycle state of the account. Set by MarkBankAccountAsActive and MarkBankAccountAsInactive.
-  State state = 8 [(buf.validate.field).enum.defined_only = true];
+  State state = 6 [(buf.validate.field).enum.defined_only = true];
   // Time the bank account was created. Output only.
-  google.protobuf.Timestamp create_time = 9;
+  google.protobuf.Timestamp create_time = 7;
   // Time the bank account was last updated. Output only.
-  google.protobuf.Timestamp update_time = 10;
-
-  // replaced by owner_arn and state
-  reserved 1, 5;
-  reserved "owner", "account_state";
+  google.protobuf.Timestamp update_time = 8;
 }

@@ -11,6 +11,8 @@ Built with `buf` (see `Makefile`, `buf.yaml`); generated code goes to `gen/` and
   delete RPCs return the deleted resource, multi-field update RPCs take an `update_mask`, and field rules are
   protovalidate annotations, using the shared rules in `validation/v1/rules.proto`.
 - For anything not covered there, follow the Google API Improvement Proposals: https://google.aip.dev/
+- Nothing is released: prefer correct, consistent models over backward compatibility. Rename and renumber freely;
+  don't keep `reserved` fields or legacy names.
 - api-linter expects: a resource's lifecycle enum nested in it as `State` (AIP-216); no `Create*` name on an RPC
   that doesn't take the resource (use a verb like `Generate`); "relative to" in `*_offset` Duration comments;
   file-level comments above `syntax`.

@@ -25,7 +25,7 @@ message Brand {
     (buf.validate.field).string.(validation.v1.http_url) = true
   ];
   // Trademark class under the Nice classification, 1 to 45.
-  int32 trademark_class = 9 [
+  int32 trademark_class = 7 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).int32 = {
       gte: 1
@@ -33,19 +33,15 @@ message Brand {
     }
   ];
   // Whether the brand is active.
-  bool is_active = 10;
+  bool is_active = 8;
   // Owner of the brand: a user or a business entity, e.g. shop:User:u_1 or shop:BusinessEntity:b_1.
   // Set at creation.
-  string owner_arn = 11 [
+  string owner_arn = 9 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.(validation.v1.owner_arn) = true
   ];
   // Time the brand was created. Output only.
-  google.protobuf.Timestamp create_time = 12;
+  google.protobuf.Timestamp create_time = 10;
   // Time the brand was last updated. Output only.
-  google.protobuf.Timestamp update_time = 13;
-
-  // replaced by owner_arn
-  reserved 7, 8;
-  reserved "owner_id", "owner_type";
+  google.protobuf.Timestamp update_time = 11;
 }

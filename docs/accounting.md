@@ -1,14 +1,13 @@
 # Accounting
 
-Double-entry books modelled on Tally (TallyPrime), kept simple: `accounting/v1` (accounts) and
-`accounting/ledger/v1` (groups, ledgers, vouchers, reports).
+Double-entry books of accounts modelled on Tally (TallyPrime), kept simple, in `accounting/v1`.
 
 | Tally | Here |
 |---|---|
-| Company | `Account`: a set of books with an owner, currency, financial year start and lock date |
-| Group | `Group`: chart of accounts; 28 predefined, custom groups under them |
-| Ledger | `GeneralLedger`: under a group, opening balance, optional party, bill-wise flag |
-| Voucher | `Voucher` of a `VoucherType`, with balanced `GeneralLedgerEntry` lines |
+| Company | `Book` (`BookService`): owner, currency, financial year start, begin and lock dates |
+| Group | `Group` (`LedgerService`): chart of accounts; 28 predefined, custom groups under them |
+| Ledger | `Ledger` (`LedgerService`): under a group, opening and closing `Balance`, optional party, bill-wise flag |
+| Voucher | `Voucher` (`VoucherService`) of a `VoucherType`, with balanced `VoucherEntry` lines |
 | Bill-wise details | `BillAllocation` on an entry: new reference, against reference, advance, on account |
 | Trial Balance, P&L, Balance Sheet, Ledger, Outstandings | `ReportService` |
 
@@ -17,7 +16,7 @@ cost centres, multi-currency, budgets, interest, bank reconciliation, payroll, m
 
 ## Predefined groups
 
-Creating an account seeds these groups (`predefined = true`). "GP" is `affects_gross_profit`.
+Creating a book seeds these groups (`predefined = true`). "GP" is `affects_gross_profit`.
 
 | Group | Parent | Nature | GP |
 |---|---|---|---|
