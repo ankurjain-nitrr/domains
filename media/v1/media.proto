@@ -2,8 +2,9 @@
 // category images, logos. See docs/media.md for scope and flows.
 //
 // Media is the owned resource (ARN tenant:Media:id). Image and Video are embeddable snapshots of a READY media item
-// that other domains store on their own resources; copy Media.image or Media.video as-is. Renditions on a snapshot
-// are output only: owning services fill them at read time, because rendition URLs are signed and expire.
+// that other domains store on their own resources; copy Media.image or Media.video as-is. When reading, owning
+// services replace stored snapshots with fresh ones from MediaService.BatchGetMedia: that fills the renditions, whose
+// URLs are signed and expire, and picks up later edits such as corrected alt text.
 syntax = "proto3";
 
 package media.v1;
@@ -154,25 +155,26 @@ message Video {
   // Height of the original in pixels.
   int32 height = 3 [(buf.validate.field).int32.gte = 0];
   // Length of the video.
-  google.protobuf.Duration duration = 4;
+  google.protobuf.Duration duration = 4 [(buf.validate.field).duration.gte = {}];
   // Whether the video has an audio track.
   bool has_audio = 5;
   // Description of the video for screen readers.
   string alt_text = 6 [(buf.validate.field).string.max_len = 1000];
   // Attribution, e.g. "Video: AP".
   string credit = 7 [(buf.validate.field).string.max_len = 200];
-  // Cover image, the first frame, with its own still renditions. Its media_id is empty.
+  // Cover image, the first frame. Its media_id is empty. Renditions of a video preset with a still format (JPEG,
+  // PNG, WebP) are in poster.renditions.
   Image poster = 8;
-  // Ready renditions. Output only, filled at read time.
+  // Ready video (MP4) renditions. Output only, filled at read time.
   repeated Rendition renditions = 9;
 }
 
 // The file a media item was created from.
 message SourceFile {
-  // MIME type, e.g. image/jpeg, video/mp4.
+  // MIME type without parameters, e.g. image/jpeg, video/mp4. Case-insensitive.
   string mime_type = 1 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
-    (buf.validate.field).string.pattern = "^[a-z]+/[a-zA-Z0-9.+-]+$"
+    (buf.validate.field).string.pattern = "^[a-zA-Z]+/[a-zA-Z0-9.+-]+$"
   ];
   // Size in bytes.
   int64 size_bytes = 2 [(buf.validate.field).int64.gte = 0];
@@ -190,7 +192,12 @@ message Media {
   option (buf.validate.message).cel = {
     id: "media.content_matches_type"
     message: "image is set only for MEDIA_TYPE_IMAGE and video only for MEDIA_TYPE_VIDEO"
-    expression: "(!has(this.image) || this.type == 1) && (!has(this.video) || this.type == 2)"
+    expression: "this.type == 0 || ((!has(this.image) || this.type == 1) && (!has(this.video) || this.type == 2))"
+  };
+  option (buf.validate.message).cel = {
+    id: "media.ready_has_content"
+    message: "a READY media item has an image or a video"
+    expression: "this.state != 3 || has(this.image) || has(this.video)"
   };
 
   // Lifecycle of a media item.

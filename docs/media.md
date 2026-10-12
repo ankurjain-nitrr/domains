@@ -33,9 +33,10 @@ owns that).
 Rules:
 
 - Renditions never upscale beyond the source.
-- `Image.renditions` and `Video.renditions` are output only and filled at read time, because URLs expire. Embedding
-  domains store the snapshot without them.
-- A still format (JPEG, PNG, WebP) on a video preset gives its poster frame.
+- Renditions are output only and filled at read time, because URLs expire. Embedding domains store the snapshot
+  without them, and on read replace it with a fresh one from `BatchGetMedia`, which also picks up later edits.
+- A still format (JPEG, PNG, WebP) on a video preset gives its poster frame, listed in `Video.poster.renditions`;
+  `Video.renditions` holds only MP4.
 
 ## Suggested default presets
 
